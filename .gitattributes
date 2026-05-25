@@ -1,0 +1,10 @@
+# Force TypeScript as primary language for GitHub linguist
+*.py linguist-vendored
+*.py linguist-documentation
+
+# Mark TypeScript as primary
+src/*.ts linguist-language=TypeScript
+hermes-automation/*.ts linguist-language=TypeScript
+
+# Ignore inference folder from language stats
+inference/ linguist-vendored
