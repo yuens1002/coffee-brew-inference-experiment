@@ -5,11 +5,13 @@ Part of coffee-brew-inference-experiment (TypeScript-anchored repo)
 
 import dspy
 import json
+import sys
+import os
 from typing import List, Optional
 
-# ── Configure LM (uses Hermes Agent's default provider via OPENROUTER_API_KEY or ANTHROPIC_API_KEY)
+# ── Configure LM (uses OpenRouter provider)
 lm = dspy.LM(
-    model="tencent/hy3-preview",  # Matches current Hermes model
+    model="openrouter/tencent/hy3-preview",  # Use openrouter/ prefix for OpenRouter models
     max_tokens=512,
     temperature=0.7
 )
@@ -18,14 +20,12 @@ dspy.settings.configure(lm=lm)
 
 # ── DSPy Signature: Coffee Input → Brew Recommendation
 class BrewRecommendation(dspy.Signature):
-    """Given coffee attributes and brew parameters, recommend optimal adjustments."""
+    """Given brewing method and brew parameters, recommend optimal adjustments."""
     
     # Input fields
-    origin: str = dspy.InputField(desc="Coffee origin country/region (e.g., Colombia, Ethiopia)")
-    roast_level: str = dspy.InputField(desc="Roast level: light, medium, medium-dark, dark")
+    method: str = dspy.InputField(desc="Brewing method name (e.g., Pour Over, French Press)")
     grind_size: str = dspy.InputField(desc="Grind size: extra-coarse, coarse, medium-coarse, medium, medium-fine, fine")
     water_temp_c: int = dspy.InputField(desc="Water temperature in Celsius (85-100)")
-    ratio: float = dspy.InputField(desc="Coffee-to-water ratio (e.g., 1:16 = 0.0625)")
     brew_time_s: int = dspy.InputField(desc="Brew time in seconds")
     
     # Output field
@@ -39,95 +39,40 @@ def get_sample_brews() -> List[dspy.Example]:
     """Return sample brew records for DSPy optimization."""
     return [
         dspy.Example(
-            origin="Colombia",
-            roast_level="medium",
+            method="Pour Over",
             grind_size="medium",
             water_temp_c=93,
-            ratio=0.0625,  # 1:16
-            brew_time_s=210,  # 3:30
-            recommendation="Good baseline. For brighter notes, try 90°C water and 1:17 ratio."
-        ).with_inputs("origin", "roast_level", "grind_size", "water_temp_c", "ratio", "brew_time_s"),
+            brew_time_s=210,
+            recommendation="Good baseline. For brighter notes, try 90°C water and medium-fine grind."
+        ).with_inputs("method", "grind_size", "water_temp_c", "brew_time_s"),
         dspy.Example(
-            origin="Ethiopia",
-            roast_level="light",
-            grind_size="medium-fine",
-            water_temp_c=88,
-            ratio=0.0667,  # 1:15
-            brew_time_s=180,  # 3:00
-            recommendation="Light roast benefits from lower temp (88°C) to preserve floral notes. Use 1:15 ratio."
-        ).with_inputs("origin", "roast_level", "grind_size", "water_temp_c", "ratio", "brew_time_s"),
-        dspy.Example(
-            origin="Brazil",
-            roast_level="medium-dark",
+            method="French Press",
             grind_size="coarse",
             water_temp_c=96,
-            ratio=0.0588,  # 1:17
-            brew_time_s=240,  # 4:00
-            recommendation="Darker roast needs hotter water (96°C) and coarser grind to avoid over-extraction."
-        ).with_inputs("origin", "roast_level", "grind_size", "water_temp_c", "ratio", "brew_time_s"),
+            brew_time_s=240,
+            recommendation="Coarse grind and 96°C water works best for French Press to avoid over-extraction."
+        ).with_inputs("method", "grind_size", "water_temp_c", "brew_time_s"),
         dspy.Example(
-            origin="Guatemala",
-            roast_level="medium",
-            grind_size="medium-coarse",
-            water_temp_c=92,
-            ratio=0.0625,
-            brew_time_s=195,  # 3:15
-            recommendation="Balanced medium roast. Try medium-coarse grind and 92°C for chocolatey notes."
-        ).with_inputs("origin", "roast_level", "grind_size", "water_temp_c", "ratio", "brew_time_s"),
-        dspy.Example(
-            origin="Kenya",
-            roast_level="light",
+            method="Espresso",
             grind_size="fine",
-            water_temp_c=89,
-            ratio=0.0714,  # 1:14
-            brew_time_s=150,  # 2:30
-            recommendation="Kenyan light roast shines with fine grind, 89°C, and 1:14 ratio for bright acidity."
-        ).with_inputs("origin", "roast_level", "grind_size", "water_temp_c", "ratio", "brew_time_s"),
+            water_temp_c=93,
+            brew_time_s=30,
+            recommendation="Fine grind and 93°C water for optimal espresso extraction in 30s."
+        ).with_inputs("method", "grind_size", "water_temp_c", "brew_time_s"),
         dspy.Example(
-            origin="Sumatra",
-            roast_level="dark",
-            grind_size="coarse",
-            water_temp_c=98,
-            ratio=0.0556,  # 1:18
-            brew_time_s=270,  # 4:30
-            recommendation="Dark Sumatran needs 98°C, coarse grind, and 1:18 ratio to extract earthy notes without bitterness."
-        ).with_inputs("origin", "roast_level", "grind_size", "water_temp_c", "ratio", "brew_time_s"),
-        dspy.Example(
-            origin="Costa Rica",
-            roast_level="medium-light",
-            grind_size="medium",
-            water_temp_c=90,
-            ratio=0.0667,
-            brew_time_s=195,
-            recommendation="Medium-light Costa Rican does well at 90°C, medium grind, 1:15 ratio for honey sweetness."
-        ).with_inputs("origin", "roast_level", "grind_size", "water_temp_c", "ratio", "brew_time_s"),
-        dspy.Example(
-            origin="Yemen",
-            roast_level="dark",
-            grind_size="extra-coarse",
-            water_temp_c=99,
-            ratio=0.0526,  # 1:19
-            brew_time_s=300,  # 5:00
-            recommendation="Traditional Yemeni dark roast requires 99°C, extra-coarse grind, and 1:19 ratio for 5:00 brew."
-        ).with_inputs("origin", "roast_level", "grind_size", "water_temp_c", "ratio", "brew_time_s"),
-        dspy.Example(
-            origin="Rwanda",
-            roast_level="light",
+            method="AeroPress",
             grind_size="medium-fine",
-            water_temp_c=87,
-            ratio=0.0714,
-            brew_time_s=165,
-            recommendation="Rwandan light roast at 87°C, medium-fine grind, 1:14 ratio highlights berry notes."
-        ).with_inputs("origin", "roast_level", "grind_size", "water_temp_c", "ratio", "brew_time_s"),
+            water_temp_c=90,
+            brew_time_s=90,
+            recommendation="Medium-fine grind and 90°C water for balanced AeroPress brew in 90s."
+        ).with_inputs("method", "grind_size", "water_temp_c", "brew_time_s"),
         dspy.Example(
-            origin="Colombia",
-            roast_level="dark",
+            method="Cold Brew",
             grind_size="coarse",
-            water_temp_c=97,
-            ratio=0.0588,
-            brew_time_s=255,
-            recommendation="Dark Colombian needs 97°C, coarse grind, 1:17 ratio to avoid burnt flavors."
-        ).with_inputs("origin", "roast_level", "grind_size", "water_temp_c", "ratio", "brew_time_s"),
+            water_temp_c=20,
+            brew_time_s=43200,
+            recommendation="Coarse grind and room temperature water for 12-hour cold brew extraction."
+        ).with_inputs("method", "grind_size", "water_temp_c", "brew_time_s"),
     ]
 
 
@@ -136,16 +81,78 @@ def brew_metric(example: dspy.Example, pred: dspy.Prediction, trace=None) -> boo
     """Simple metric: recommendation mentions at least one input parameter."""
     rec = pred.recommendation.lower()
     inputs_to_check = [
-        example.roast_level,
+        example.method,
         example.grind_size,
         str(example.water_temp_c),
-        str(example.ratio),
+        str(example.brew_time_s),
     ]
     return any(attr.lower() in rec for attr in inputs_to_check if attr)
 
 
+def run_inference(method: str, grind_size: str, water_temp_c: int, brew_time_s: int) -> dict:
+    """Run DSPy inference and return recommendation with metadata."""
+    try:
+        optimized_path = "/data/coffee-brew-inference-experiment/inference/brew_optimized.json"
+        
+        # Load optimized model if available, else base model
+        brew_module = dspy.Predict(BrewRecommendation)
+        confidence = "medium"
+        
+        if os.path.exists(optimized_path):
+            try:
+                brew_module.load(optimized_path)
+                confidence = "high"
+            except:
+                pass
+        
+        # Run inference
+        prediction = brew_module(
+            method=method,
+            grind_size=grind_size,
+            water_temp_c=water_temp_c,
+            brew_time_s=brew_time_s
+        )
+        
+        recommendation = prediction.recommendation
+    except Exception as e:
+        # Fallback mock response if LLM is unavailable
+        recommendation = f"For {method} with {grind_size} grind at {water_temp_c}°C for {brew_time_s}s: " \
+                       f"Adjust grind size to match method defaults, monitor extraction time closely."
+        confidence = "low"
+    
+    return {
+        "recommendation": recommendation,
+        "confidence": confidence,
+        "sources": ["sample_brews"]  # Could list actual training sources here
+    }
+
+
 # ── Main Inference Pipeline
 def main():
+    # Check if running in inference mode
+    if "--infer" in sys.argv:
+        try:
+            # Read input JSON from stdin
+            input_data = json.load(sys.stdin)
+            required = ["method", "grind_size", "water_temp", "brew_time"]
+            for field in required:
+                if field not in input_data:
+                    raise ValueError(f"Missing required field: {field}")
+            
+            result = run_inference(
+                method=input_data["method"],
+                grind_size=input_data["grind_size"],
+                water_temp_c=int(input_data["water_temp"]),
+                brew_time_s=int(input_data["brew_time"])
+            )
+            
+            print(json.dumps(result))
+            sys.exit(0)
+        except Exception as e:
+            print(json.dumps({"error": str(e)}), file=sys.stderr)
+            sys.exit(1)
+    
+    # Otherwise run training/optimization pipeline
     print("☕ Coffee Brew Inference Experiment — DSPy Prototype")
     print("=" * 60)
     
@@ -154,13 +161,11 @@ def main():
     brew_module = dspy.Predict(BrewRecommendation)
     
     # 2. Test with a sample input
-    print("\n2. Testing with sample input (Colombia medium roast)...")
+    print("\n2. Testing with sample input (Pour Over)...", flush=True)
     test_input = {
-        "origin": "Colombia",
-        "roast_level": "medium",
+        "method": "Pour Over",
         "grind_size": "medium",
         "water_temp_c": 93,
-        "ratio": 0.0625,
         "brew_time_s": 210
     }
     prediction = brew_module(**test_input)
@@ -168,12 +173,12 @@ def main():
     print(f"   Recommendation: {prediction.recommendation}")
     
     # 3. Load sample data
-    print("\n3. Loading sample brew dataset (10+ records)...")
+    print("\n3. Loading sample brew dataset (5 records)...", flush=True)
     trainset = get_sample_brews()
     print(f"   Loaded {len(trainset)} samples")
     
     # 4. Optimize with BootstrapFewShot (lightweight optimizer)
-    print("\n4. Optimizing with BootstrapFewShot...")
+    print("\n4. Optimizing with BootstrapFewShot...", flush=True)
     optimizer = dspy.BootstrapFewShot(
         metric=brew_metric,
         max_bootstrapped_demos=3,
@@ -182,12 +187,12 @@ def main():
     optimized_module = optimizer.compile(brew_module, trainset=trainset)
     
     # 5. Test optimized module
-    print("\n5. Testing optimized module...")
+    print("\n5. Testing optimized module...", flush=True)
     optimized_pred = optimized_module(**test_input)
     print(f"   Optimized Recommendation: {optimized_pred.recommendation}")
     
     # 6. Save optimized module
-    print("\n6. Saving optimized module to brew_optimized.json...")
+    print("\n6. Saving optimized module to brew_optimized.json...", flush=True)
     optimized_module.save("/data/coffee-brew-inference-experiment/inference/brew_optimized.json")
     print("   Saved successfully!")
     

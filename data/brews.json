@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "brewing_method_id": 1,
+    "origin": "Hermes",
+    "roast_level": "medium",
+    "grind_size": "medium-fine",
+    "water_temp_c": 93,
+    "ratio": 0.0625,
+    "brew_time_s": 210,
+    "rating": 5,
+    "created_at": "2026-05-25T11:45:25.886Z"
+  },
+  {
+    "id": 2,
+    "brewing_method_id": 2,
+    "origin": "Manual",
+    "roast_level": "dark",
+    "grind_size": "coarse",
+    "water_temp_c": 96,
+    "ratio": 0.0588,
+    "brew_time_s": 240,
+    "rating": 4,
+    "created_at": "2026-05-25T11:45:44.121Z"
+  }
+]
