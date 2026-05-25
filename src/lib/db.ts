@@ -46,7 +46,7 @@ export async function getDB(): Promise<Database> {
   if (db) return db;
   
   const SQL = await initSqlJs({
-    locateFile: (file: string) => `https://sql.js.org/dist/${file}`
+    locateFile: (file: string) => path.join(process.cwd(), 'node_modules', 'sql.js', 'dist', file)
   });
   
   if (fs.existsSync(DB_PATH)) {
