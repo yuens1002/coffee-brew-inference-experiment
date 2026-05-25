@@ -18,13 +18,3 @@ app.route('/mcp', mcpRoutes);
 app.get('/health', (c) => c.json({ status: 'ok' }));
 
 export default app;
-
-// Start server if this is the main module
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
-  console.log(`Server starting on port ${port}`);
-  // Use @hono/node-server to listen
-  import('@hono/node-server').then(({ serve }) => {
-    serve({ fetch: app.fetch, port });
-  });
-}

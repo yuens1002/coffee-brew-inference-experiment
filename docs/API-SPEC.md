@@ -1,6 +1,6 @@
 # Coffee Brew Inference Experiment — API Specification
 
-> **Base URL:** `http://localhost:3000` (local dev)  
+> **Base URL:** `http://localhost:4000` (local dev)  
 > **Authentication:** Open (no auth for experiment)  
 > **Content-Type:** `application/json`
 
