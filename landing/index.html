@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>☕ Coffee Brew Inference Experiment</title>
+    <style>
+        * { margin:0; padding:0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5e6d3; color: #3e2723; min-height: 100vh; padding: 20px; }
+        .container { max-width: 900px; margin:0 auto; }
+        h1 { text-align: center; color: #5d4037; margin-bottom: 10px; font-size: 2.2em; }
+        .subtitle { text-align: center; color: #8d6e63; margin-bottom: 30px; font-size: 1.1em; }
+        
+        .tabs { display: flex; gap: 2px; margin-bottom: 20px; background: #d7ccc8; border-radius: 8px; padding: 4px; }
+        .tab { flex: 1; padding: 12px 20px; text-align: center; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .tab.active { background: #5d4037; color: white; }
+        .tab:not(.active):hover { background: #bcaaa4; }
+        
+        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .card h2 { margin-bottom: 16px; color: #5d4037; }
+        
+        label { display: block; margin-bottom: 6px; font-weight: 600; color: #5d4037; }
+        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 16px; border: 2px solid #d7ccc8; border-radius: 6px; font-size: 14px; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #8d6e63; }
+        
+        button { background: #6d4c41; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; cursor: pointer; width: 100%; font-weight: 600; transition: background 0.3s; }
+        button:hover { background: #5d4037; }
+        button:disabled { background: #bcaaa4; cursor: not-allowed; }
+        
+        .result { background: #efebe9; border-left: 4px solid #8d6e63; padding: 16px; margin-top: 20px; border-radius: 6px; }
+        .result h3 { margin-bottom: 10px; color: #5d4037; }
+        .loading { text-align: center; color: #8d6e63; }
+        .error { background: #ffcdd2; border-left-color: #c62828; }
+        
+        .badge { display: inline-block; background: #d7ccc8; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-right: 8px; margin-bottom: 8px; }
+        .info-box { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 12px; margin-bottom: 16px; font-size: 14px; line-height: 1.6; }
+        
+        .method-info { background: #fff3e0; border-left: 4px solid #ff9800; padding: 12px; margin-bottom: 16px; font-size: 14px; }
+        .method-info strong { color: #e65100; }
+        
+        .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+        .compare-box { background: #f5f5f5; padding: 12px; border-radius: 6px; }
+        .compare-box h4 { margin-bottom: 8px; color: #5d4037; }
+        
+        #journey2 { display: none; }
+        
+        .success { background: #c8e6c9; border-left-color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>☕ Coffee Brew Inference Experiment</h1>
+        <p class="subtitle">TypeScript-anchored • Powered by Hermes Agent + DSPy • Open Knowledge Base</p>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab(1)">💡 How Should I Brew?</div>
+            <div class="tab" onclick="switchTab(2)">📝 Log My Brew Experience</div>
+        </div>
+
+        <!-- Journey1: "How?" -->
+        <div id="journey1">
+            <div class="card">
+                <h2>💡 How Should I Brew This?</h2>
+                <p style="margin-bottom: 16px; color: #666;">Get AI-powered brew recommendation based on coffee knowledge + your parameters.</p>
+                
+                <div id="methodInfo1" class="method-info" style="display:none;"></div>
+
+                <form id="howForm">
+                    <label for="brewingMethod1">Brewing Method</label>
+                    <select id="brewingMethod1" name="brewingMethod" required onchange="updateMethodInfo(1)">
+                        <option value="">Select method...</option>
+                    </select>
+
+                    <label for="origin1">Coffee Origin</label>
+                    <input type="text" id="origin1" name="origin" placeholder="e.g., Colombia, Ethiopia" required>
+
+                    <label for="roastLevel1">Roast Level</label>
+                    <select id="roastLevel1" name="roastLevel" required>
+                        <option value="">Select roast...</option>
+                        <option value="light">Light</option>
+                        <option value="medium-light">Medium-Light</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="medium-dark">Medium-Dark</option>
+                        <option value="dark">Dark</option>
+                    </select>
+
+                    <label for="grindSize1">Grind Size</label>
+                    <select id="grindSize1" name="grindSize" required>
+                        <option value="">Select grind...</option>
+                        <option value="extra-coarse">Extra Coarse</option>
+                        <option value="coarse">Coarse</option>
+                        <option value="medium-coarse">Medium-Coarse</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="medium-fine">Medium-Fine</option>
+                        <option value="fine">Fine</option>
+                        <option value="extra-fine">Extra Fine</option>
+                    </select>
+
+                    <label for="waterTemp1">Water Temperature (°C) <span style="font-weight:normal; color:#888;">(80-100)</span></label>
+                    <input type="number" id="waterTemp1" name="waterTemp" min="80" max="100" value="93" required>
+
+                    <label for="ratio1">Ratio (coffee:water, e.g., 0.0625 = 1:16)</label>
+                    <input type="number" id="ratio1" name="ratio" min="0.04" max="0.15" step="0.0001" value="0.0625" required>
+
+                    <label for="brewTime1">Brew Time (seconds)</label>
+                    <input type="number" id="brewTime1" name="brewTime" min="20" max="86400" value="210" required>
+
+                    <button type="submit" id="submitBtn1">🤖 Get AI Recommendation</button>
+                </form>
+
+                <div id="result1" style="display:none;"></div>
+            </div>
+        </div>
+
+        <!-- Journey2: "Real Experience" -->
+        <div id="journey2">
+            <div class="card">
+                <h2>📝 Log My Brew Experience</h2>
+                <p style="margin-bottom: 16px; color: #666;">Brewed coffee in real life? Log it here and compare with AI recommendations.</p>
+                
+                <div class="info-box">
+                    <strong>💡 Tip:</strong> After logging, you'll be able to compare your brew against what the AI would have recommended!
+                </div>
+
+                <div id="methodInfo2" class="method-info" style="display:none;"></div>
+
+                <form id="experienceForm">
+                    <label for="brewingMethod2">Brewing Method</label>
+                    <select id="brewingMethod2" name="brewingMethod" required onchange="updateMethodInfo(2)">
+                        <option value="">Select method...</option>
+                    </select>
+
+                    <label for="origin2">Coffee Origin</label>
+                    <input type="text" id="origin2" name="origin" placeholder="e.g., Colombia, Ethiopia" required>
+
+                    <label for="roastLevel2">Roast Level</label>
+                    <select id="roastLevel2" name="roastLevel" required>
+                        <option value="">Select roast...</option>
+                        <option value="light">Light</option>
+                        <option value="medium-light">Medium-Light</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="medium-dark">Medium-Dark</option>
+                        <option value="dark">Dark</option>
+                    </select>
+
+                    <label for="grindSize2">Grind Size Used</label>
+                    <select id="grindSize2" name="grindSize" required>
+                        <option value="">Select grind...</option>
+                        <option value="extra-coarse">Extra Coarse</option>
+                        <option value="coarse">Coarse</option>
+                        <option value="medium-coarse">Medium-Coarse</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="medium-fine">Medium-Fine</option>
+                        <option value="fine">Fine</option>
+                        <option value="extra-fine">Extra Fine</option>
+                    </select>
+
+                    <label for="waterTemp2">Water Temperature Used (°C)</label>
+                    <input type="number" id="waterTemp2" name="waterTemp" min="80" max="100" value="93" required>
+
+                    <label for="ratio2">Ratio Used (coffee:water)</label>
+                    <input type="number" id="ratio2" name="ratio" min="0.04" max="0.15" step="0.0001" value="0.0625" required>
+
+                    <label for="brewTime2">Brew Time Used (seconds)</label>
+                    <input type="number" id="brewTime2" name="brewTime" min="20" max="86400" value="210" required>
+
+                    <label for="rating2">Your Rating (1-5)</label>
+                    <input type="number" id="rating2" name="rating" min="1" max="5" step="0.1" value="4.0" required>
+
+                    <label for="notes2">Notes (optional)</label>
+                    <textarea id="notes2" name="notes" rows="3" placeholder="How did it taste? What went well?"></textarea>
+
+                    <button type="submit" id="submitBtn2">📝 Log My Brew</button>
+                </form>
+
+                <div id="result2" style="display:none;"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🤖 How It Works</h2>
+            <p><span class="badge">Hermes Agent</span> Coordinated the entire build via subagents</p>
+            <p><span class="badge">TypeScript API</span> Backend with SQLite (better-sqlite3)</p>
+            <p><span class="badge">DSPy</span> Python inference pipeline for brew recommendations</p>
+            <p><span class="badge">Open Knowledge</span> Brewing parameters scraped from reputable sources</p>
+            <p><span class="badge">DEV Challenge</span> Entry for Hermes Agent Challenge 2026</p>
+        </div>
+    </div>
+
+    <script>
+        let brewingMethods = [];
+
+        // Load brewing methods
+        async function loadBrewingMethods() {
+            try {
+                const res = await fetch('/brewing-methods');
+                brewingMethods = await res.json();
+                
+                ['brewingMethod1', 'brewingMethod2'].forEach(id => {
+                    const select = document.getElementById(id);
+                    brewingMethods.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m.id;
+                        opt.textContent = m.name;
+                        opt.dataset = m;
+                        select.appendChild(opt);
+                    });
+                });
+            } catch (err) {
+                console.error('Failed to load brewing methods:', err);
+            }
+        }
+
+        // Update method info display
+        function updateMethodInfo(journeyNum) {
+            const select = document.getElementById(`brewingMethod${journeyNum}`);
+            const info = document.getElementById(`methodInfo${journeyNum}`);
+            const selected = select.options[select.selectedIndex];
+            
+            if (selected.value) {
+                const method = brewingMethods.find(m => m.id == selected.value);
+                if (method) {
+                    info.innerHTML = `<strong>${method.name}</strong><br/>Default: ${method.default_temp_c}°C, ${(method.default_brew_time_s / 60).toFixed(1)} min, ${method.grind_size} grind, 1:${(1/method.default_ratio).toFixed(0)} ratio<br/><em>${method.description}</em>`;
+                    info.style.display = 'block';
+                }
+            } else {
+                info.style.display = 'none';
+            }
+        }
+
+        // Switch between journeys
+        function switchTab(journeyNum) {
+            document.querySelectorAll('.tab').forEach((tab, idx) => {
+                tab.classList.toggle('active', idx === journeyNum - 1);
+            });
+            document.getElementById('journey1').style.display = journeyNum === 1 ? 'block' : 'none';
+            document.getElementById('journey2').style.display = journeyNum === 2 ? 'block' : 'none';
+        }
+
+        // Journey1: Get recommendation
+        document.getElementById('howForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn1');
+            const result = document.getElementById('result1');
+            btn.disabled = true;
+            btn.textContent = '🤖 Getting AI recommendation...';
+            result.style.display = 'none';
+
+            const methodId = parseInt(document.getElementById('brewingMethod1').value);
+            const method = brewingMethods.find(m => m.id === methodId);
+
+            const formData = {
+                brewing_method_id: methodId,
+                origin: document.getElementById('origin1').value,
+                roast_level: document.getElementById('roastLevel1').value,
+                grind_size: document.getElementById('grindSize1').value,
+                water_temp_c: parseInt(document.getElementById('waterTemp1').value),
+                ratio: parseFloat(document.getElementById('ratio1').value),
+                brew_time_s: parseInt(document.getElementById('brewTime1').value)
+            };
+
+            try {
+                const res = await fetch('/recommend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                const data = await res.json();
+
+                result.className = 'result';
+                result.innerHTML = `
+                    <h3>☕ AI Recommendation for ${method?.name || 'your brew'}</h3>
+                    <p><strong>Input:</strong> ${data.input?.origin || formData.origin} ${data.input?.roast_level || formData.roast_level} roast</p>
+                    <p><strong>Recommendation:</strong> ${data.recommendation || data.message || 'No recommendation available yet.'}</p>
+                    ${data.confidence ? `<p><strong>Confidence:</strong> ${data.confidence}</p>` : ''}
+                `;
+                result.style.display = 'block';
+            } catch (err) {
+                result.className = 'result error';
+                result.innerHTML = `<strong>Error:</strong> ${err.message}`;
+                result.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🤖 Get AI Recommendation';
+            }
+        });
+
+        // Journey2: Log brew experience
+        document.getElementById('experienceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn2');
+            const result = document.getElementById('result2');
+            btn.disabled = true;
+            btn.textContent = '📝 Logging your brew...';
+            result.style.display = 'none';
+
+            const formData = {
+                brewing_method_id: parseInt(document.getElementById('brewingMethod2').value),
+                origin: document.getElementById('origin2').value,
+                roast_level: document.getElementById('roastLevel2').value,
+                grind_size: document.getElementById('grindSize2').value,
+                water_temp_c: parseInt(document.getElementById('waterTemp2').value),
+                ratio: parseFloat(document.getElementById('ratio2').value),
+                brew_time_s: parseInt(document.getElementById('brewTime2').value),
+                rating: parseFloat(document.getElementById('rating2').value),
+                notes: document.getElementById('notes2').value
+            };
+
+            try {
+                const res = await fetch('/brews', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                const data = await res.json();
+
+                if (data.id) {
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        <h3>✅ Brew Logged Successfully!</h3>
+                        <p>Your brew (ID: ${data.id}) has been recorded.</p>
+                        <p style="margin-top: 12px;">
+                            <button onclick="compareBrew(${data.id})" style="width:auto; padding: 8px 16px; font-size: 14px;">
+                                🔍 Compare with AI Recommendation
+                            </button>
+                        </p>
+                        <div id="compareResult${data.id}"></div>
+                    `;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `<strong>Error:</strong> ${data.error || 'Failed to log brew'}`;
+                }
+                result.style.display = 'block';
+            } catch (err) {
+                result.className = 'result error';
+                result.innerHTML = `<strong>Error:</strong> ${err.message}`;
+                result.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📝 Log My Brew';
+            }
+        });
+
+        // Compare brew with AI
+        async function compareBrew(brewId) {
+            const resultDiv = document.getElementById(`compareResult${brewId}`);
+            resultDiv.innerHTML = '<p class="loading">🔍 Comparing with AI recommendation...</p>';
+
+            try {
+                const res = await fetch(`/brews/${brewId}/compare`);
+                const data = await res.json();
+
+                resultDiv.innerHTML = `
+                    <div class="compare-grid">
+                        <div class="compare-box">
+                            <h4>☕ Your Brew</h4>
+                            <p>Temp: ${data.user_brew.water_temp_c}°C</p>
+                            <p>Ratio: 1:${(1/data.user_brew.ratio).toFixed(0)}</p>
+                            <p>Time: ${data.user_brew.brew_time_s}s</p>
+                            <p>Grind: ${data.user_brew.grind_size}</p>
+                            <p>Rating: ${data.user_brew.rating}/5</p>
+                        </div>
+                        <div class="compare-box">
+                            <h4>🤖 AI Recommendation</h4>
+                            <p>Temp: ${data.ai_recommendation.water_temp_c}°C</p>
+                            <p>Ratio: 1:${(1/data.ai_recommendation.ratio).toFixed(0)}</p>
+                            <p>Time: ${data.ai_recommendation.brew_time_s}s</p>
+                            <p>Grind: ${data.ai_recommendation.grind_size}</p>
+                        </div>
+                    </div>
+                    <p style="margin-top: 12px;"><strong>Analysis:</strong> ${data.analysis}</p>
+                    <p><strong>Match Score:</strong> ${(data.match_score * 100).toFixed(0)}%</p>
+                `;
+            } catch (err) {
+                resultDiv.innerHTML = `<p class="error">Error comparing: ${err.message}</p>`;
+            }
+        }
+
+        loadBrewingMethods();
+    </script>
+</body>
+</html>
