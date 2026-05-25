@@ -5,10 +5,12 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "npx tsx watch src/index.ts",
+    "dev": "npx tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
-    "seed-db": "tsx scripts/seed-db.ts"
+    "start": "node dist/server.js",
+    "seed-db": "tsx scripts/seed-db.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@hono/mcp": "^0.1.1",
@@ -24,6 +26,7 @@
     "@types/node": "^22.13.13",
     "@types/sql.js": "^1.4.11",
     "tsx": "^4.19.3",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vitest": "^4.1.7"
   }
 }
