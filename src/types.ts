@@ -1,38 +1,39 @@
-export interface BrewRecord {
-  id?: number;
-  origin: string;
-  roast_level: string;
-  grind_size: string;
-  water_temp_c: number;
-  ratio: number;
-  brew_time_s: number;
-  rating: number;
+export interface BrewingMethod {
+  id: string;
+  name: string;
+  description: string;
+  waterTemp: number; // Celsius
+  grindSize: string;
+  brewTime: number; // seconds
+  ratio: string; // coffee:water
+}
+
+export interface Brew {
+  id: string;
+  methodId: string;
+  coffeeName: string;
+  grindSetting: string;
+  waterTemp: number;
+  brewTime: number;
+  rating: number; // 1-5
   notes?: string;
-  created_at?: string;
+  timestamp: string;
 }
 
-export interface BrewRecommendation {
-  origin: string;
-  roast_level: string;
-  grind_size: string;
-  water_temp_c: number;
-  ratio: number;
-  brew_time_s: number;
-  recommendation: string;
+export interface RecommendationParams {
+  coffeeName?: string;
+  methodId?: string;
+  preferredGrind?: string;
+  preferredTemp?: number;
 }
 
-export interface DSPyRequest {
-  origin: string;
-  roast_level: string;
-  grind_size: string;
-  water_temp_c: number;
-  ratio: number;
-  brew_time_s: number;
-}
-
-export interface APIResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
+export interface Recommendation {
+  method: BrewingMethod;
+  params: {
+    grindSize: string;
+    waterTemp: number;
+    brewTime: number;
+    ratio: string;
+  };
+  reasoning: string;
 }
