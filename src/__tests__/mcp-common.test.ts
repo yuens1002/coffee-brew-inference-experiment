@@ -47,4 +47,25 @@ describe('checkOrigin', () => {
     const body = await res.json();
     expect(body).toEqual({ error: 'Origin not allowed' });
   });
+
+  it('blocks origins that contain "localhost" in the path/query but are not localhost hosts', async () => {
+    const res = await makeTestApp().request('/test', {
+      headers: { Origin: 'https://evil.com?localhost' },
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('blocks origins that end with "yuens.me" but are not yuens.me subdomains', async () => {
+    const res = await makeTestApp().request('/test', {
+      headers: { Origin: 'https://notyuens.me' },
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('blocks malformed Origin values', async () => {
+    const res = await makeTestApp().request('/test', {
+      headers: { Origin: 'not-a-url' },
+    });
+    expect(res.status).toBe(403);
+  });
 });

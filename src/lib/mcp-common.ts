@@ -11,8 +11,18 @@ export const corsHeaders = {
 export function checkOrigin(c: Context) {
   const origin = c.req.header('Origin');
   if (!origin) return null;
-  if (!origin.endsWith('yuens.me') && !origin.includes('localhost')) {
+  let hostname: string;
+  try {
+    hostname = new URL(origin).hostname;
+  } catch {
     return c.json({ error: 'Origin not allowed' }, 403, corsHeaders);
   }
+  const allowed =
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '::1' ||
+    hostname === 'yuens.me' ||
+    hostname.endsWith('.yuens.me');
+  if (!allowed) return c.json({ error: 'Origin not allowed' }, 403, corsHeaders);
   return null;
 }
