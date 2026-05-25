@@ -1,6 +1,6 @@
 {
   "name": "coffee-brew-inference-experiment",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Coffee brew inference experiment with Hono, TypeScript, and MCP",
   "type": "module",
   "main": "dist/index.js",
