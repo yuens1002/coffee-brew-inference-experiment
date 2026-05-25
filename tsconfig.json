@@ -1,8 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "node",
+    "module": "commonjs",
     "lib": ["ES2020"],
     "outDir": "./dist",
     "rootDir": "./src",
@@ -17,6 +16,6 @@
     "types": ["node"],
     "allowSyntheticDefaultImports": true
   },
-  "include": ["src/**/*", "hermes-automation/**/*"],
-  "exclude": ["node_modules", "dist", "inference/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "inference/**/*", "hermes-automation/**/*"]
 }

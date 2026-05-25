@@ -1,0 +1,74 @@
+[
+  {
+    "id": 1,
+    "name": "Pour Over",
+    "description": "Hand-poured water over coffee grounds in a filter (V60, Chemex, etc.)",
+    "default_ratio": 0.0625,
+    "default_temp_c": 93,
+    "default_brew_time_s": 210,
+    "grind_size": "medium-fine"
+  },
+  {
+    "id": 2,
+    "name": "French Press",
+    "description": "Coffee steeped in hot water, separated by metal mesh filter",
+    "default_ratio": 0.0588,
+    "default_temp_c": 96,
+    "default_brew_time_s": 240,
+    "grind_size": "coarse"
+  },
+  {
+    "id": 3,
+    "name": "Espresso",
+    "description": "High-pressure water forced through finely-ground coffee",
+    "default_ratio": 0.125,
+    "default_temp_c": 93,
+    "default_brew_time_s": 30,
+    "grind_size": "fine"
+  },
+  {
+    "id": 4,
+    "name": "AeroPress",
+    "description": "Immersion and pressure brewing with paper filter",
+    "default_ratio": 0.0714,
+    "default_temp_c": 90,
+    "default_brew_time_s": 90,
+    "grind_size": "medium-fine"
+  },
+  {
+    "id": 5,
+    "name": "Cold Brew",
+    "description": "Coffee steeped in cold water for extended period",
+    "default_ratio": 0.125,
+    "default_temp_c": 20,
+    "default_brew_time_s": 43200,
+    "grind_size": "coarse"
+  },
+  {
+    "id": 6,
+    "name": "Moka Pot",
+    "description": "Stovetop brewing using steam pressure",
+    "default_ratio": 0.0833,
+    "default_temp_c": 90,
+    "default_brew_time_s": 300,
+    "grind_size": "medium"
+  },
+  {
+    "id": 7,
+    "name": "Siphon",
+    "description": "Vacuum brewing with cloth filter",
+    "default_ratio": 0.0625,
+    "default_temp_c": 93,
+    "default_brew_time_s": 180,
+    "grind_size": "medium-fine"
+  },
+  {
+    "id": 8,
+    "name": "Turkish/Ibrik",
+    "description": "Finely ground coffee simmered in water with sugar",
+    "default_ratio": 0.1111,
+    "default_temp_c": 95,
+    "default_brew_time_s": 180,
+    "grind_size": "extra-fine"
+  }
+]
