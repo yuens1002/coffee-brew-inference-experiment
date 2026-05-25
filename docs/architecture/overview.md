@@ -82,6 +82,15 @@ brews
 | `localhost` (any port) | ✅ |
 | Everything else | ❌ 403 |
 
+## Deployment
+
+| Target | URL |
+|--------|-----|
+| Production (Railway) | https://brew-guide-production.up.railway.app |
+| MCP endpoint | https://brew-guide-production.up.railway.app/mcp |
+
+Railway project: `brew-guide` — auto-deploys from `main` on `yuens1002/brew-guide`.
+
 ## Planned evolution
 
 See `docs/roadmap.md` for next phases (LLM inference, grounded retrieval, hosted DB, public deployment).
