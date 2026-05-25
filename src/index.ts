@@ -18,9 +18,3 @@ app.route('/mcp', mcpRoutes);
 app.get('/health', (c) => c.json({ status: 'ok' }));
 
 export default app;
-
-const port = process.env.PORT ? parseInt(process.env.PORT) : 4000;
-console.log(`Server starting on port ${port}`);
-import('@hono/node-server').then(({ serve }) => {
-  serve({ fetch: app.fetch, port });
-});
