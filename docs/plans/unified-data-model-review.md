@@ -23,7 +23,7 @@ One docs file out of date (README.md). All other surfaces aligned. Ready for hum
 | D6 | POST /recommend — structured response | ✅ shipped | src/routes/brewing.ts:101-129 |
 | D7 | MCP tools updated — 5 tools, snake_case | ✅ shipped | src/routes/mcp.ts:1-190 |
 | D8 | Tests — 31/31 passing | ✅ shipped | 3 test files |
-| D9 | Divergence doc | ✅ shipped | docs/architecture/mcp-server-divergence.md |
+| D9 | Removed mcp-server legacy | ✅ shipped | mcp-server/ deleted |
 | D10 | Master plan | ✅ shipped | docs/plans/mvp-autonomous-plan.md |
 
 ---

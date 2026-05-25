@@ -30,7 +30,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `GET /brews/:id/compare` — real delta analysis vs method defaults (temp, time, ratio, grind comparison)
 - `search_brews` MCP tool — filter brew logs by origin, method, limit
 - Five MCP tools total (was four)
-- `docs/architecture/mcp-server-divergence.md` — documented standalone server divergence
+- Removed standalone `mcp-server/` — unified under single code path in `src/`
 - `docs/plans/mvp-autonomous-plan.md` — master plan for 3 autonomous build sessions
 
 ### Fixed

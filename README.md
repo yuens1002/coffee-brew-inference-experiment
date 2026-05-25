@@ -27,7 +27,6 @@ brew-guide/
 │   ├── architecture/      # Module map, divergence notes
 │   ├── plans/             # Feature plans, ACs, review reports
 │   └── roadmap.md         # Phased development plan
-├── mcp-server/            # Standalone JS MCP server (legacy reference)
 ├── inference/             # DSPy prototype (Python, reference)
 ├── landing/               # Simple HTML landing page
 ├── package.json
