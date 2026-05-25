@@ -96,7 +96,7 @@ function buildMcpServer(): McpServer {
     'search_brews',
     {
       title: 'Search Brew Logs',
-      description: 'Search through logged brew experiences by origin, method, or rating',
+      description: 'Search through logged brew experiences by origin or brewing method',
       inputSchema: {
         origin: z.string().optional().describe('Filter by coffee origin'),
         method: z.number().optional().describe('Filter by brewing method ID'),

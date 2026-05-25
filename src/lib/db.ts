@@ -1,7 +1,7 @@
 import initSqlJs, { Database } from 'sql.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import type { BrewingMethod, Brew, BrewWithMethod, RecommendationParams } from '../types.js';
+import type { BrewingMethod, Brew, BrewWithMethod } from '../types.js';
 
 const DB_PATH = path.join(process.cwd(), 'data', 'coffee-brew.db');
 
@@ -55,6 +55,19 @@ export async function getDB(): Promise<Database> {
   if (fs.existsSync(DB_PATH)) {
     const buffer = fs.readFileSync(DB_PATH);
     db = new SQL.Database(buffer);
+    // Detect v1 schema (old table with water_temp column) and migrate
+    const colCheck = db.prepare("PRAGMA table_info(brewing_methods)");
+    const hasWaterTemp = colCheck.step() && colCheck.getAsObject().name === 'water_temp';
+    colCheck.free();
+    if (hasWaterTemp) {
+      db.run('DROP TABLE IF EXISTS brewing_methods');
+      db.run('DROP TABLE IF EXISTS brews');
+      db.run(SCHEMA);
+      fs.unlinkSync(DB_PATH); // force re-seed on next boot
+      db = new SQL.Database();
+      db.run(SCHEMA);
+      await seedBrewingMethods();
+    }
   } else {
     db = new SQL.Database();
     db.run(SCHEMA);
@@ -133,20 +146,18 @@ export async function getBrews(filters?: {
     params.push(filters.limit);
   }
 
+  // Bind all params at once; sql.js bind accepts [param1, param2, ...]
   const stmt = database.prepare(sql);
-  params.forEach((p, i) => {
-    if (typeof p === 'number') stmt.bind([i + 1, p]);
-    else stmt.bind([i + 1, p as string]);
-  });
-
-  // Re-prepare with bound params
-  stmt.free();
-  const boundStmt = database.prepare(sql);
-  if (params.length > 0) boundStmt.bind(params as Parameters<typeof boundStmt.bind>[0]);
+  if (params.length > 0) {
+    const flatParams: (string | number)[] = params.map((p) =>
+      typeof p === 'number' ? p : (p as string),
+    );
+    stmt.bind(flatParams as unknown as Parameters<typeof stmt.bind>[0]);
+  }
 
   const brews: BrewWithMethod[] = [];
-  while (boundStmt.step()) {
-    const row = boundStmt.getAsObject();
+  while (stmt.step()) {
+    const row = stmt.getAsObject();
     brews.push({
       id: row.id as number,
       brewing_method: row.brewing_method as string,
@@ -161,9 +172,26 @@ export async function getBrews(filters?: {
       created_at: row.created_at as string,
     });
   }
-  boundStmt.free();
+  stmt.free();
 
-  const countStmt = database.prepare('SELECT COUNT(*) AS cnt FROM brews');
+  // Count with same filters
+  let countSql = 'SELECT COUNT(*) AS cnt FROM brews b WHERE 1=1';
+  const countParams: unknown[] = [];
+  if (filters?.origin) {
+    countSql += ' AND b.origin = ?';
+    countParams.push(filters.origin);
+  }
+  if (filters?.method !== undefined) {
+    countSql += ' AND b.brewing_method_id = ?';
+    countParams.push(filters.method);
+  }
+  const countStmt = database.prepare(countSql);
+  if (countParams.length > 0) {
+    const flatCountParams: (string | number)[] = countParams.map((p) =>
+      typeof p === 'number' ? p : (p as string),
+    );
+    countStmt.bind(flatCountParams as unknown as Parameters<typeof countStmt.bind>[0]);
+  }
   let count = 0;
   if (countStmt.step()) {
     count = countStmt.getAsObject().cnt as number;

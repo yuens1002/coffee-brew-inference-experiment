@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { getBrewingMethods, getBrews, getBrewById, addBrew } from '../lib/db.js';
-import type { BrewingMethod, Brew, BrewWithMethod } from '../types.js';
+import type { BrewingMethod, Brew } from '../types.js';
 
 const app = new Hono();
 
@@ -127,9 +127,9 @@ app.post('/recommend', zValidator('json', recommendSchema), async (c) => {
       origin: params.origin || '',
       roast_level: params.roast_level || '',
       grind_size: params.grind_size || method.grind_size,
-      water_temp_c: params.water_temp_c || method.default_temp_c,
-      ratio: params.ratio || method.default_ratio,
-      brew_time_s: params.brew_time_s || method.default_brew_time_s,
+      water_temp_c: params.water_temp_c ?? method.default_temp_c,
+      ratio: params.ratio ?? method.default_ratio,
+      brew_time_s: params.brew_time_s ?? method.default_brew_time_s,
     },
     recommendation: `For ${params.origin || 'your coffee'} (${params.roast_level || 'unknown'} roast), try ${method.name} at ${method.default_temp_c}°C with a ${method.grind_size} grind. Ratio: approx 1:${Math.round(1 / method.default_ratio)} for ${method.default_brew_time_s}s.`,
     confidence: 'low',
