@@ -8,6 +8,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const fsPromises = require('fs').promises;
+const { spawn } = require('child_process');
 
 // ── Data Paths
 const dataDir = path.join(__dirname, '../data');
@@ -95,32 +96,65 @@ app.get('/brewing-methods', (_req, res) => {
   res.json(brewingMethods);
 });
 
-// POST /recommend
-app.post('/recommend', async (req, res) => {
-  const brewData = req.body;
-
-  const required = ['brewing_method_id', 'origin', 'roast_level', 'grind_size', 'water_temp_c', 'ratio', 'brew_time_s'];
-  for (const field of required) {
-    if (!(field in brewData)) {
-      return res.status(400).json({ error: `Missing required field: ${field}` });
-    }
+// ── Helper: Generate recommendation from brewing method defaults
+function generateRecommendation(methodName, grindSize, waterTemp, brewTime) {
+  const method = brewingMethods.find(m => m.name.toLowerCase() === methodName.toLowerCase());
+  
+  if (!method) {
+    return {
+      recommendation: `For ${methodName}, use ${grindSize} grind at ${waterTemp}°C for ${brewTime}s. Adjust parameters based on taste preferences.`,
+      confidence: 'low',
+      sources: ['default']
+    };
   }
+  
+  const tips = [];
+  if (waterTemp < method.default_temp_c - 5) tips.push(`increase water temp to ~${method.default_temp_c}°C`);
+  if (waterTemp > method.default_temp_c + 5) tips.push(`decrease water temp to ~${method.default_temp_c}°C`);
+  if (grindSize !== method.grind_size) tips.push(`use ${method.grind_size} grind for ${method.name}`);
+  if (Math.abs(brewTime - method.default_brew_time_s) > 30) tips.push(`adjust brew time to ~${method.default_brew_time_s}s`);
+  
+  const recommendation = tips.length > 0
+    ? `For ${methodName}: ${tips.join(', ')}. ${method.description}`
+    : `Your parameters look good for ${methodName}! Enjoy your brew.`;
+  
+  return {
+    recommendation,
+    confidence: tips.length === 0 ? 'high' : 'medium',
+    sources: ['brewing_methods.json', method.description]
+  };
+}
 
-  try {
-    const method = brewingMethods.find(m => m.id === brewData.brewing_method_id);
-    const methodName = method?.name || 'Unknown';
-
-    // Simple recommendation based on method defaults
-    const recommendation = `For ${brewData.origin} ${brewData.roast_level} roast using ${methodName}, try ${brewData.water_temp_c}°C water, ${(1/brewData.ratio).toFixed(0)}:1 ratio, and ${brewData.brew_time_s}s brew time with ${brewData.grind_size} grind.`;
-
-    res.json({
-      brewing_method: methodName,
-      input: brewData,
-      recommendation,
-      confidence: 'medium'
+// POST /recommend - Inference endpoint (pure JS, no Python dependency)
+app.post('/recommend', async (req, res) => {
+  const { method, grind_size, water_temp, brew_time } = req.body;
+  
+  // Validate required fields
+  const required = ['method', 'grind_size', 'water_temp', 'brew_time'];
+  const missing = required.filter(field => !(field in req.body));
+  if (missing.length > 0) {
+    return res.status(400).json({ 
+      error: 'Missing required fields', 
+      missing_fields: missing 
     });
+  }
+  
+  // Validate numeric fields
+  if (isNaN(water_temp) || isNaN(brew_time)) {
+    return res.status(400).json({ 
+      error: 'water_temp and brew_time must be numeric' 
+    });
+  }
+  
+  try {
+    const result = generateRecommendation(method, grind_size, Number(water_temp), Number(brew_time));
+    res.json(result);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to get recommendation', details: String(err) });
+    console.error('Recommendation error:', err);
+    res.status(500).json({ 
+      error: 'Failed to get recommendation', 
+      details: String(err) 
+    });
   }
 });
 
