@@ -7,3 +7,7 @@ inference/__pycache__/
 inference/*.pyc
 .vscode/
 .idea/
+
+# Claude tooling — not for public repos
+.claude/
+CLAUDE.md
