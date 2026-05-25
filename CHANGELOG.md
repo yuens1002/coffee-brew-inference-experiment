@@ -8,11 +8,37 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Planned
-- AI-powered `recommend` tool backed by a real LLM (replacing the static method lookup)
-- `compare_brew` tool implementation — delta analysis between logged brew and AI recommendation
-- `search_brews` tool — grounded retrieval over logged brew history by origin, method, or rating
+- AI-powered `recommend` tool backed by a real LLM via OpenRouter (replacing the static method lookup)
+- Narrative parsing: unstructured user text → structured brew data (LLM extraction)
+- Scheduled scraping pipeline: Reddit + coffee forums → auto-ingest community brew data
 - Persistent storage migration from sql.js (file-based) to a hosted DB (Supabase / Turso)
-- Public deployment with a stable MCP endpoint URL
+
+---
+
+## [2.0.0] — 2026-05-25
+
+### Changed (Breaking)
+- **Data model unified to API-SPEC snake_case** — `waterTemp` → `water_temp_c`, `grindSize` → `grind_size`, `brewTime` → `brew_time_s`
+- `coffeeName` replaced by `origin` + `roast_level` (two rich fields)
+- `ratio` changed from string (`"1:16"`) to number (`0.0625`)
+- `id` changed from TEXT UUID to INTEGER AUTOINCREMENT
+- `timestamp` → `created_at`
+
+### Added
+- `GET /brews` now queries DB with `?origin=&method=&limit=` filters, returns `{count, brews}` with method name
+- `GET /brews/:id` — fetch single brew by ID
+- `GET /brews/:id/compare` — real delta analysis vs method defaults (temp, time, ratio, grind comparison)
+- `search_brews` MCP tool — filter brew logs by origin, method, limit
+- Five MCP tools total (was four)
+- Removed standalone `mcp-server/` — unified under single code path in `src/`
+- `docs/plans/mvp-autonomous-plan.md` — master plan for 3 autonomous build sessions
+
+### Fixed
+- `compare_brew` MCP tool — real deltas (was hardcoded "80% match")
+- `POST /brews` response now returns `{id, message}` matching API-SPEC
+- `POST /recommend` returns structured `Recommendation` with `input` echo
+- All 31 tests updated to new data model
+- TypeScript strict: zero errors
 
 ---
 

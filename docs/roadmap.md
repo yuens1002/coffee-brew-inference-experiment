@@ -8,12 +8,12 @@ Tracks planned work by phase. Completed items move to `CHANGELOG.md`.
 
 Replace static stub responses with real AI-powered recommendations.
 
-- [ ] `recommend` tool — wire Claude/OpenRouter to generate brew advice from method params + coffee profile
-- [ ] `compare_brew` tool — implement delta analysis between logged brew and AI recommendation
-- [ ] Structured reasoning output (grind delta, temp delta, time delta, qualitative advice)
+- [x] `compare_brew` tool — delta analysis between logged brew and method baseline
+- [ ] `recommend` tool — wire OpenRouter to generate brew advice from origin + roast + method
+- [ ] Structured reasoning output with real confidence scoring
 
 **Owner**: `/backend-architect`  
-**Depends on**: API key config (OPENROUTER_API_KEY or ANTHROPIC_API_KEY)
+**Depends on**: `OPENROUTER_API_KEY` in environment
 
 ---
 
@@ -21,9 +21,10 @@ Replace static stub responses with real AI-powered recommendations.
 
 Make the knowledge base queryable from logged brew history.
 
-- [ ] `search_brews` MCP tool — filter brew log by origin, method, rating, date range
-- [ ] Semantic similarity on brew notes (embedding + vector search or simple keyword)
-- [ ] `get_brew` MCP tool — fetch a single brew by ID for the compare flow
+- [x] `search_brews` MCP tool — filter brew log by origin, method, limit
+- [x] `get_brew` / `GET /brews/:id` — fetch a single brew by ID
+- [ ] Semantic similarity on brew notes (embedding + vector search or keyword)
+- [ ] Scraping pipeline — auto-ingest community brew data from Reddit + forums
 
 **Owner**: `/backend-architect`
 
