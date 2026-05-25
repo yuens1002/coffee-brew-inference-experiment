@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.js.map
+.env
+*.db
+inference/__pycache__/
+inference/*.pyc
+.vscode/
+.idea/
