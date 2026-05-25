@@ -7,16 +7,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-- 2026-05-25 — fix(config): allow localhost origin, default port 4000, fix Windows server startup
-
-## [1.0.1] — 2026-05-25
-
 ### Planned
 - AI-powered `recommend` tool backed by a real LLM (replacing the static method lookup)
 - `compare_brew` tool implementation — delta analysis between logged brew and AI recommendation
 - `search_brews` tool — grounded retrieval over logged brew history by origin, method, or rating
 - Persistent storage migration from sql.js (file-based) to a hosted DB (Supabase / Turso)
 - Public deployment with a stable MCP endpoint URL
+
+---
+
+## [1.0.1] — 2026-05-25
+
+### Fixed
+- `checkOrigin` now allows no-`Origin` requests (direct MCP clients) and `localhost` origins for local testing
+- Default port changed from 3000 to 4000 to avoid conflicts with other local services
+- Removed broken `import.meta.url` guard (fails on Windows) — server now starts unconditionally
+- `dev` script updated to `npx tsx` so tsx runs without a global install
 
 ---
 
