@@ -10,7 +10,8 @@ export const corsHeaders = {
 
 export function checkOrigin(c: Context) {
   const origin = c.req.header('Origin');
-  if (origin && !origin.endsWith('yuens.me')) {
+  if (!origin) return null;
+  if (!origin.endsWith('yuens.me') && !origin.includes('localhost')) {
     return c.json({ error: 'Origin not allowed' }, 403, corsHeaders);
   }
   return null;
