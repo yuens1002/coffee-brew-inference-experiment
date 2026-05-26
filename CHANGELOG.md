@@ -10,7 +10,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Planned
 - Narrative parsing: unstructured user text → structured brew data (LLM extraction)
 - Scheduled scraping pipeline: Reddit + coffee forums → auto-ingest community brew data
-- Persistent storage migration from sql.js (file-based) to a hosted DB (Supabase / Turso)
+
+---
+
+## [2.0.2] — 2026-05-26
+
+- feat(db): migrate from sql.js to Neon Postgres + Prisma ORM
 
 ---
 
