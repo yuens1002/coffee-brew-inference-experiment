@@ -56,6 +56,7 @@ const mockBrews: { count: number; brews: BrewWithMethod[] } = {
   brews: [
     {
       id: 1,
+      brewing_method_id: 1,
       brewing_method: 'Pour Over',
       origin: 'Colombia',
       roast_level: 'medium',

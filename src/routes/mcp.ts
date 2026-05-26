@@ -8,7 +8,7 @@ import { computeBestBrew, tryLinkBrew, resolveOrigin } from '../lib/recommend.js
 import type { Brew } from '../types.js';
 
 function buildMcpServer(): McpServer {
-  const server = new McpServer({ name: 'coffee-brew-mcp', version: '2.0.0' });
+  const server = new McpServer({ name: 'coffee-brew-mcp', version: '2.0.1' });
 
   // Tool 1: get_brewing_methods
   server.registerTool(

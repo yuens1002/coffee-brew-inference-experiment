@@ -120,6 +120,7 @@ export interface BrewRecommendationLink {
 /** Brew record with resolved method name (GET /brews response) */
 export interface BrewWithMethod {
   id: number;
+  brewing_method_id: number;
   brewing_method: string;
   origin: string;
   roast_level: string;

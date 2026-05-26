@@ -3,7 +3,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { getBrewingMethods, getBrews, getBrewById, addBrew, getOrigins } from '../lib/db.js';
 import { computeBestBrew, tryLinkBrew, resolveOrigin } from '../lib/recommend.js';
-import type { BrewingMethod, Brew, BrewSource } from '../types.js';
+import type { BrewingMethod, Brew } from '../types.js';
 
 const app = new Hono();
 
@@ -51,8 +51,8 @@ const brewSchema = z.object({
   brew_time_s: z.number(),
   rating: z.number().min(1).max(5),
   notes: z.string().optional(),
-  source: z.string().optional(),
-  source_url: z.string().optional(),
+  source: z.enum(['user_submitted', 'scraped:reddit', 'scraped:home-barista']).optional().default('user_submitted'),
+  source_url: z.string().url().optional(),
   field_confidence: z.string().optional(),
 });
 
@@ -78,7 +78,7 @@ app.post('/brews', zValidator('json', brewSchema), async (c) => {
     brew_time_s: data.brew_time_s,
     rating: data.rating,
     notes: data.notes,
-    source: (data.source as BrewSource) || ('user_submitted' as BrewSource),
+    source: data.source,
     source_url: data.source_url,
     field_confidence: fieldConfidence,
   });

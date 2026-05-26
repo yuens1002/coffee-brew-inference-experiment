@@ -262,6 +262,7 @@ export async function getBrews(filters?: {
     const row = stmt.getAsObject();
     brews.push({
       id: row.id as number,
+      brewing_method_id: row.brewing_method_id as number,
       brewing_method: row.brewing_method as string,
       origin: row.origin as string,
       roast_level: row.roast_level as string,
@@ -343,7 +344,7 @@ export async function addBrew(brew: Omit<Brew, 'id' | 'created_at'> & { source?:
 export async function createRecommendation(rec: Omit<RecommendationRecord, 'id' | 'created_at' | 'fingerprint'>): Promise<RecommendationRecord> {
   const database = await getDB();
   const created_at = new Date().toISOString();
-  const fingerprint = `${(rec.origin || 'unknown').toLowerCase()}-${(rec.roast_level || 'unknown').toLowerCase()}-${rec.brewing_method_id}-${Math.floor(Date.now() / 1000)}`;
+  const fingerprint = `${(rec.origin || 'unknown').toLowerCase()}-${(rec.roast_level || 'unknown').toLowerCase()}-${rec.brewing_method_id}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
   database.run(
     'INSERT INTO recommendations (brewing_method_id, origin, roast_level, grind_size, water_temp_c, ratio, brew_time_s, recommendation, confidence, confidence_breakdown, sources, fingerprint, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',

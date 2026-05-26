@@ -227,6 +227,7 @@ describe('MCP tool: search_brews', () => {
       brews: [
         {
           id: 1,
+          brewing_method_id: 1,
           brewing_method: 'Pour Over',
           origin: 'Colombia',
           roast_level: 'medium',

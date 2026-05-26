@@ -37,6 +37,7 @@ const mockOrigins: Origin[] = [
 function makeBrew(overrides: Partial<BrewWithMethod> = {}): BrewWithMethod {
   return {
     id: 1,
+    brewing_method_id: 1,
     brewing_method: 'Pour Over',
     origin: 'Colombia',
     roast_level: 'medium',

@@ -1,10 +1,10 @@
 import {
-  getBrewingMethods, getBrews, getBrewById,
+  getBrewingMethods, getBrews,
   createRecommendation, findRecentRecommendation, linkBrewToRecommendation,
-  searchOrigins, getOrigins,
+  getOrigins,
 } from './db.js';
 import type {
-  BrewingMethod, BrewWithMethod, Brew,
+  BrewWithMethod, Brew,
   Recommendation, RecommendationParams, SourceRef,
 } from '../types.js';
 
@@ -31,7 +31,7 @@ function matchScore(brew: BrewWithMethod, params: RecommendationParams): number 
 
   if (params.brewing_method_id) {
     weights += 3;
-    if (brew.brewing_method === params.brewing_method_id.toString()) score += 3; // method name match handled differently
+    if (brew.brewing_method_id === params.brewing_method_id) score += 3;
   }
 
   if (params.roast_level && brew.roast_level) {
@@ -272,13 +272,15 @@ export async function resolveOrigin(raw: string): Promise<{ resolved: string; ve
   const origins = await getOrigins();
   const q = raw.trim();
 
+  if (!q) return { resolved: raw, verified: false };
+
   // Exact match
   const exact = origins.find(o => o.name.toLowerCase() === q.toLowerCase());
   if (exact) return { resolved: exact.name, verified: exact.is_verified };
 
-  // Alias match
+  // Alias match — filter empty strings so origins with aliases:'' don't match blank input
   const alias = origins.find(o =>
-    (o.aliases || '').toLowerCase().split(',').map(a => a.trim()).includes(q.toLowerCase()),
+    (o.aliases || '').split(',').map(a => a.trim()).filter(Boolean).some(a => a.toLowerCase() === q.toLowerCase()),
   );
   if (alias) return { resolved: alias.name, verified: true };
 
