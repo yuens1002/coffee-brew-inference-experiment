@@ -1,10 +1,17 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { getBrewingMethods, getBrews, getBrewById, addBrew } from '../lib/db.js';
+import { getBrewingMethods, getBrews, getBrewById, addBrew, getOrigins } from '../lib/db.js';
+import { computeBestBrew, tryLinkBrew, resolveOrigin } from '../lib/recommend.js';
 import type { BrewingMethod, Brew } from '../types.js';
 
 const app = new Hono();
+
+// GET /origins
+app.get('/origins', async (c) => {
+  const origins = await getOrigins();
+  return c.json(origins);
+});
 
 // GET /brewing-methods
 app.get('/brewing-methods', async (c) => {
@@ -44,11 +51,38 @@ const brewSchema = z.object({
   brew_time_s: z.number(),
   rating: z.number().min(1).max(5),
   notes: z.string().optional(),
+  source: z.enum(['user_submitted', 'scraped:reddit', 'scraped:home-barista']).optional().default('user_submitted'),
+  source_url: z.string().url().optional(),
+  field_confidence: z.string().optional(),
 });
 
 app.post('/brews', zValidator('json', brewSchema), async (c) => {
   const data = c.req.valid('json');
-  const brew = await addBrew(data);
+  const { resolved: origin, verified } = await resolveOrigin(data.origin);
+
+  // Compute origin confidence from resolution quality and merge into field_confidence
+  const originConfValue = verified ? 1.0 : origin !== data.origin ? 0.7 : 0.5;
+  let base: Record<string, unknown> = {};
+  if (data.field_confidence) {
+    try { base = JSON.parse(data.field_confidence); } catch { /* ignore invalid JSON */ }
+  }
+  const fieldConfidence = JSON.stringify({ ...base, origin: originConfValue });
+
+  const brew = await addBrew({
+    brewing_method_id: data.brewing_method_id,
+    origin,
+    roast_level: data.roast_level,
+    grind_size: data.grind_size,
+    water_temp_c: data.water_temp_c,
+    ratio: data.ratio,
+    brew_time_s: data.brew_time_s,
+    rating: data.rating,
+    notes: data.notes,
+    source: data.source,
+    source_url: data.source_url,
+    field_confidence: fieldConfidence,
+  });
+  tryLinkBrew(brew).catch(() => {}); // fire-and-forget implicit feedback link
   return c.json({ id: brew.id, message: 'Brew record added successfully' }, 201);
 });
 
@@ -100,7 +134,7 @@ app.get('/brews/:id/compare', async (c) => {
   });
 });
 
-// POST /recommend (stub — LLM wired in Phase 2)
+// POST /recommend — deterministic community consensus via computeBestBrew()
 const recommendSchema = z.object({
   brewing_method_id: z.number().optional(),
   origin: z.string().optional(),
@@ -113,27 +147,19 @@ const recommendSchema = z.object({
 
 app.post('/recommend', zValidator('json', recommendSchema), async (c) => {
   const params = c.req.valid('json');
-  const methods = await getBrewingMethods();
-
-  const method = params.brewing_method_id
-    ? methods.find((m) => m.id === params.brewing_method_id)
-    : methods[0];
-
-  if (!method) return c.json({ error: 'Brewing method not found' }, 404);
-
-  return c.json({
-    brewing_method: method.name,
-    input: {
-      origin: params.origin || '',
-      roast_level: params.roast_level || '',
-      grind_size: params.grind_size || method.grind_size,
-      water_temp_c: params.water_temp_c ?? method.default_temp_c,
-      ratio: params.ratio ?? method.default_ratio,
-      brew_time_s: params.brew_time_s ?? method.default_brew_time_s,
-    },
-    recommendation: `For ${params.origin || 'your coffee'} (${params.roast_level || 'unknown'} roast), try ${method.name} at ${method.default_temp_c}°C with a ${method.grind_size} grind. Ratio: approx 1:${Math.round(1 / method.default_ratio)} for ${method.default_brew_time_s}s.`,
-    confidence: 'low',
-  });
+  const resolvedOrigin = params.origin
+    ? (await resolveOrigin(params.origin)).resolved
+    : params.origin;
+  try {
+    const result = await computeBestBrew({ ...params, origin: resolvedOrigin });
+    return c.json(result);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Recommendation failed';
+    if (msg === 'Brewing method not found' || msg === 'No brewing methods available') {
+      return c.json({ error: msg }, 404);
+    }
+    return c.json({ error: msg }, 500);
+  }
 });
 
 export default app;

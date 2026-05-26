@@ -20,7 +20,7 @@ Orchestrator (this session)
 │   ├── Sub-agent A: coffee-brew-backend-architect (implement feature)
 │   └── Sub-agent B: coffee-brew-test-engineer (write tests from spec)
 ├── Verify: npm test + npx tsc --noEmit
-├── Review: docs/plans/{session}-review.md
+├── Review: docs/plans/{session}/review.md
 ├── Retro: skill patches for lessons learned
 └── Commit: feat/{session-branch}
 ```
@@ -190,8 +190,8 @@ export async function parseNarrative(narrative: string): Promise<Partial<BrewInp
 - [ ] `npx tsc --noEmit` — zero TypeScript errors
 - [ ] No `any` types introduced
 - [ ] New code follows existing patterns (Zod validation, Hono routes, vi.mock for DB)
-- [ ] `docs/plans/{session}-review.md` created (cross-artifact drift check)
-- [ ] `docs/plans/{session}-retro.md` created (lessons → skill patches)
+- [ ] `docs/plans/{session}/review.md` created (cross-artifact drift check)
+- [ ] `docs/plans/{session}/retro.md` created (lessons → skill patches)
 - [ ] `CHANGELOG.md` updated (Unreleased section)
 - [ ] `docs/roadmap.md` updated (check off completed items)
 

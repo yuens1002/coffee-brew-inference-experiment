@@ -2,7 +2,7 @@
 
 ## Purpose
 
-A public MCP server that acts as an agentic coffee knowledge base — answering "how to brew the best coffee" and logging structured brew experiments for grounded retrieval.
+A public MCP server that acts as an agentic coffee knowledge base — answering "how to brew the best coffee" from logged community brew data, and capturing structured brew experiments for grounded retrieval and recommendation improvement.
 
 ## Stack
 
@@ -12,7 +12,7 @@ A public MCP server that acts as an agentic coffee knowledge base — answering 
 | MCP transport | `@hono/mcp` (Streamable HTTP) |
 | MCP protocol | `@modelcontextprotocol/sdk` |
 | Runtime | Node 24, TypeScript strict, ESM |
-| Database | sql.js (SQLite WASM, file-persisted) |
+| Database | sql.js (SQLite WASM, file-persisted at `data/coffee-brew.db`) |
 | Test runner | Vitest |
 
 ## Module map
@@ -22,21 +22,23 @@ src/
   server.ts          → entrypoint: binds port, never imported by tests
   index.ts           → pure Hono app: mounts routes, safe to import anywhere
   routes/
-    brewing.ts       → REST routes (/brewing-methods, /brews, /recommend)
+    brewing.ts       → REST routes (/origins, /brewing-methods, /brews, /recommend)
     mcp.ts           → MCP tool handlers + Streamable HTTP transport
   lib/
-    db.ts            → sql.js wrapper: getBrewingMethods, addBrew, saveDB
+    db.ts            → sql.js wrapper: all DB access; mock this in tests
+    recommend.ts     → recommendation engine: computeBestBrew, tryLinkBrew, resolveOrigin
     mcp-common.ts    → checkOrigin, corsHeaders
-  types.ts           → BrewingMethod, Brew, Recommendation interfaces
+  types.ts           → all shared interfaces (Brew, Recommendation, Origin, etc.)
 ```
 
 ## Request flow
 
 ### REST
 ```
-Client → GET/POST /brewing-methods|/brews|/recommend
+Client → GET/POST /origins|/brewing-methods|/brews|/recommend
   → src/index.ts (CORS middleware)
   → src/routes/brewing.ts
+  → src/lib/recommend.ts  (for /recommend and /brews — origin resolution + linking)
   → src/lib/db.ts (sql.js)
   → JSON response
 ```
@@ -45,7 +47,8 @@ Client → GET/POST /brewing-methods|/brews|/recommend
 ```
 MCP Client → POST /mcp
   → src/routes/mcp.ts: checkOrigin → buildMcpServer() → StreamableHTTPTransport
-  → tool handler: get_brewing_methods | recommend | log_brew | compare_brew
+  → tool handler: get_brewing_methods | recommend | log_brew | search_brews | compare_brew
+  → src/lib/recommend.ts  (for recommend and log_brew)
   → src/lib/db.ts (sql.js)
   → SSE response (event: message / data: {...})
 ```
@@ -55,23 +58,138 @@ MCP Client → POST /mcp
 | Tool | Status | Description |
 |------|--------|-------------|
 | `get_brewing_methods` | ✅ Live | Returns all 8 seeded brewing methods |
-| `recommend` | ⚠️ Stub | Returns static method params — no LLM yet |
-| `log_brew` | ✅ Live | Persists a brew entry to SQLite |
-| `compare_brew` | ⚠️ Stub | Hardcoded 80% match — not implemented |
+| `recommend` | ✅ Live | Deterministic community consensus via `computeBestBrew` |
+| `log_brew` | ✅ Live | Persists a brew entry; resolves origin; links to recent recommendation |
+| `search_brews` | ✅ Live | Filter brew log by origin, method, limit |
+| `compare_brew` | ⚠️ Stub | Delta vs method defaults — real scoring planned for Phase 2 |
 
-## Data model
+## Data model (v3)
 
 ```
+origins
+  id PK, name TEXT UNIQUE, region TEXT, subregion TEXT,
+  aliases TEXT (comma-separated), is_verified INT
+
 brewing_methods
-  id TEXT PK, name TEXT, description TEXT,
-  water_temp INT, grind_size TEXT, brew_time INT, ratio TEXT
+  id PK, name TEXT, description TEXT,
+  default_temp_c INT, grind_size TEXT,
+  default_brew_time_s INT, default_ratio REAL
 
 brews
-  id TEXT PK, method_id TEXT FK,
-  coffee_name TEXT, grind_setting TEXT,
-  water_temp INT, brew_time INT,
-  rating INT (1–5), notes TEXT, timestamp TEXT
+  id PK, brewing_method_id FK → brewing_methods,
+  origin TEXT, roast_level TEXT, grind_size TEXT,
+  water_temp_c INT, ratio REAL, brew_time_s INT,
+  rating INT (1–5), notes TEXT, created_at TEXT,
+  source TEXT (user_submitted | scraped:reddit | scraped:home-barista),
+  source_url TEXT,
+  field_confidence TEXT (JSON: per-field extraction confidence, 0–1)
+
+recommendations
+  id PK, brewing_method_id FK, origin TEXT, roast_level TEXT,
+  grind_size TEXT, water_temp_c INT, ratio REAL, brew_time_s INT,
+  recommendation TEXT, confidence TEXT (high|medium|low),
+  confidence_breakdown TEXT (JSON), sources TEXT (JSON: SourceRef[]),
+  fingerprint TEXT UNIQUE, created_at TEXT
+
+brew_recommendation_links
+  brew_id FK, recommendation_id FK,
+  match_confidence REAL, linked_at TEXT
+  PK (brew_id, recommendation_id)
 ```
+
+## Recommendation engine
+
+`src/lib/recommend.ts` — pure deterministic logic, no LLM.
+
+### computeBestBrew flow
+
+1. **Origin resolution** — raw input string → `resolveOrigin` → normalized name (exact → alias → fuzzy → pass-through)
+2. **Fetch candidates** — up to 50 recent brews from the DB
+3. **Score each brew** against request params:
+   - Origin match (weight 3): exact = 1.0, substring = 0.5, absent = 0
+   - Method match (weight 3): method ID equality
+   - Roast level (weight 2): exact = 1.0, adjacent roast = 0.5 (e.g. medium ↔ medium-light)
+   - Grind size (weight 1): exact = 1.0
+4. **Composite score** = `matchScore × (rating/5) × recencyDecay × sourceTrust`
+   - `recencyDecay`: linear 1.0 → 0.1 over 365 days
+   - `sourceTrust`: user_submitted=1.0, scraped:home-barista=0.85, scraped:reddit=0.7
+5. **Take top 5**, compute confidence tier, build consensus params via weighted average (numeric) or weighted mode (categorical)
+6. **Persist recommendation** to `recommendations` table with fingerprint + confidence breakdown
+
+### Confidence tiers
+
+| Tier | Condition | Output params |
+|------|-----------|---------------|
+| `high` | ≥3 matches, totalWeight > 1.5 | Pure weighted community consensus |
+| `medium` | 1–2 matches | 50/50 blend of community data + method defaults |
+| `low` | 0 matches | Pure method defaults |
+
+## Recommendation → brew feedback loop
+
+### How it works
+
+Every time a user logs a brew (`POST /brews` or MCP `log_brew`), the server fire-and-forgets `tryLinkBrew`. This looks back up to 7 days for a `recommendations` row that matches the same origin + method + roast, and if found, writes a row to `brew_recommendation_links`.
+
+```
+POST /recommend ──► recommendations (stored prediction)
+                         │
+         user brews coffee
+                         │
+POST /brews ─────► brews (logged outcome)
+                         │
+               tryLinkBrew (fire-and-forget)
+                         │
+                         ▼
+            brew_recommendation_links
+            (brew_id, recommendation_id, match_confidence)
+```
+
+### What it enables
+
+Once a brew is linked to the recommendation that preceded it, you can ask:
+- Did brews that followed a recommendation rate higher than brews that deviated from it? (recommendation quality signal)
+- When we recommended 93°C and the user brewed at 91°C and rated it 4/5, what does that delta imply? (parameter sensitivity)
+- Which source brews contributed to recommendations that produced high-rated real-world outcomes? (source quality reinforcement)
+
+This data is **captured now but not yet consumed** — the link table is the foundation for a future feedback pass that would adjust source weights or score coefficients based on actual outcomes. `match_confidence: 0.85` is a placeholder; it will eventually reflect how closely the logged brew matched the recommendation.
+
+## Origin verification signal
+
+### What resolveOrigin produces
+
+`resolveOrigin(raw)` returns `{ resolved: string, verified: boolean }`:
+
+| Match type | `verified` | Example input → resolved |
+|------------|-----------|--------------------------|
+| Exact match | `true` | `'Ethiopia'` → `'Ethiopia'` |
+| Alias match | `true` | `'Ethiopean'` → `'Ethiopia'` |
+| Fuzzy (name substring) | `false` | `'Ethiop'` → `'Ethiopia'` |
+| Unknown (pass-through) | `false` | `'Bali Blue Moon'` → `'Bali Blue Moon'` |
+
+### Current gap
+
+`verified` is computed but discarded. A brew logged with `'Ethiop'` (fuzzy) gets resolved to `'Ethiopia'` and stored — but `field_confidence` is `undefined`. `computeBestBrew` later treats that brew identically to one explicitly logged as `'Ethiopia'`, giving it full origin match weight.
+
+### Intended improvement
+
+Three-step fix (planned, not yet implemented):
+
+**Step 1 — Store origin confidence when logging a brew:**
+```
+verified === true                  → field_confidence.origin = 1.0
+verified === false, resolved ≠ raw → field_confidence.origin = 0.7  (fuzzy — likely right)
+verified === false, resolved === raw → field_confidence.origin = 0.5 (unknown — could be anything)
+```
+
+**Step 2 — Include `field_confidence` in `BrewWithMethod`** so `computeBestBrew` can read it. Currently absent from that type and the `getBrews` SQL projection.
+
+**Step 3 — Multiply origin confidence into the per-brew score:**
+```
+composite score = matchScore × (rating/5) × recencyDecay × sourceTrust × originConf
+```
+A fuzzy-resolved Ethiopia brew contributes at 70%; an unknown origin at 50%; a verified brew at 100%.
+
+**Why this matters over time:** as community data grows, the proportion of imprecisely-logged brews compounds. Without this, fuzzy-resolved brews inflate confidence in the consensus — a `high` confidence recommendation might be built on partially-guessed origins. With it, `high` confidence is earned only when enough *verified* origin data agrees, and the consensus strengthens organically as more brews are logged precisely.
 
 ## Origin policy
 
@@ -93,4 +211,8 @@ Railway project: `brew-guide` — auto-deploys from `main` on `yuens1002/brew-gu
 
 ## Planned evolution
 
-See `docs/roadmap.md` for next phases (LLM inference, grounded retrieval, hosted DB, public deployment).
+See `docs/roadmap.md`. Highest-priority gaps:
+1. Store + use origin `field_confidence` in scoring (see above)
+2. `compare_brew` — wire real delta analysis against stored recommendation (not method defaults)
+3. Scraping pipeline — auto-ingest community data from Reddit + forums
+4. Persistent storage — migrate from sql.js to Turso or Supabase

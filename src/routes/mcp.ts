@@ -4,10 +4,11 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { corsHeaders, checkOrigin } from '../lib/mcp-common.js';
 import { getBrewingMethods, getBrews, getBrewById, addBrew } from '../lib/db.js';
+import { computeBestBrew, tryLinkBrew, resolveOrigin } from '../lib/recommend.js';
 import type { Brew } from '../types.js';
 
 function buildMcpServer(): McpServer {
-  const server = new McpServer({ name: 'coffee-brew-mcp', version: '2.0.0' });
+  const server = new McpServer({ name: 'coffee-brew-mcp', version: '2.0.1' });
 
   // Tool 1: get_brewing_methods
   server.registerTool(
@@ -37,33 +38,14 @@ function buildMcpServer(): McpServer {
       },
     },
     async ({ origin, roast_level, brewing_method_id, grind_size }) => {
-      const methods = await getBrewingMethods();
-      const method = brewing_method_id
-        ? methods.find((m) => m.id === brewing_method_id)
-        : methods[0];
-      if (!method) {
-        return { content: [{ type: 'text' as const, text: 'Brewing method not found' }], isError: true };
+      const resolvedOrigin = origin ? (await resolveOrigin(origin)).resolved : origin;
+      try {
+        const result = await computeBestBrew({ origin: resolvedOrigin, roast_level, brewing_method_id, grind_size });
+        return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Recommendation failed';
+        return { content: [{ type: 'text' as const, text: msg }], isError: true };
       }
-      return {
-        content: [
-          {
-            type: 'text' as const,
-            text: JSON.stringify({
-              brewing_method: method.name,
-              input: {
-                origin: origin || '',
-                roast_level: roast_level || '',
-                grind_size: grind_size || method.grind_size,
-                water_temp_c: method.default_temp_c,
-                ratio: method.default_ratio,
-                brew_time_s: method.default_brew_time_s,
-              },
-              recommendation: `For ${origin || 'your coffee'}${roast_level ? ` (${roast_level} roast)` : ''}, try ${method.name} at ${method.default_temp_c}°C with a ${method.grind_size} grind.`,
-              confidence: 'low',
-            }),
-          },
-        ],
-      };
     },
   );
 
@@ -86,7 +68,15 @@ function buildMcpServer(): McpServer {
       },
     },
     async (params) => {
-      const brew = await addBrew(params as Omit<Brew, 'id' | 'created_at'>);
+      const { resolved: resolvedOrigin, verified } = await resolveOrigin(params.origin);
+      const originConfValue = verified ? 1.0 : resolvedOrigin !== params.origin ? 0.7 : 0.5;
+      const fieldConfidence = JSON.stringify({ origin: originConfValue });
+      const brew = await addBrew({
+        ...params,
+        origin: resolvedOrigin,
+        field_confidence: fieldConfidence,
+      } as Omit<Brew, 'id' | 'created_at'>);
+      tryLinkBrew(brew).catch(() => {}); // fire-and-forget implicit feedback link
       return { content: [{ type: 'text' as const, text: JSON.stringify({ id: brew.id, message: 'Brew record added successfully' }) }] };
     },
   );

@@ -1,15 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { BrewingMethod, Brew, BrewWithMethod } from '../types.js';
+import type { BrewingMethod, Brew, BrewWithMethod, RecommendationRecord } from '../types.js';
 
 vi.mock('../lib/db.js', () => ({
   getBrewingMethods: vi.fn(),
   getBrews: vi.fn(),
   getBrewById: vi.fn(),
   addBrew: vi.fn(),
+  getOrigins: vi.fn(),
+  searchOrigins: vi.fn(),
+  createRecommendation: vi.fn(),
+  findRecentRecommendation: vi.fn(),
+  linkBrewToRecommendation: vi.fn(),
 }));
 
 import mcpRoute from '../routes/mcp.js';
-import { getBrewingMethods, getBrews, getBrewById, addBrew } from '../lib/db.js';
+import {
+  getBrewingMethods, getBrews, getBrewById, addBrew,
+  getOrigins, createRecommendation, findRecentRecommendation,
+} from '../lib/db.js';
 
 const MCP_HEADERS = {
   'Content-Type': 'application/json',
@@ -50,12 +58,34 @@ const mockMethod: BrewingMethod = {
   default_ratio: 0.0625,
 };
 
-beforeEach(() => vi.resetAllMocks());
+const mockRecommendationRecord: RecommendationRecord = {
+  id: 1,
+  brewing_method_id: 1,
+  origin: 'Colombia',
+  roast_level: 'medium',
+  grind_size: 'medium-fine',
+  water_temp_c: 93,
+  ratio: 0.0625,
+  brew_time_s: 210,
+  recommendation: 'No community data yet — using Pour Over defaults.',
+  confidence: 'low',
+  fingerprint: 'colombia-medium-1-1234567890',
+  created_at: '2026-05-26T00:00:00Z',
+};
+
+beforeEach(() => {
+  vi.resetAllMocks();
+  // Defaults so computeBestBrew + resolveOrigin + tryLinkBrew work in all tests
+  vi.mocked(getOrigins).mockResolvedValue([]);
+  vi.mocked(getBrews).mockResolvedValue({ count: 0, brews: [] });
+  vi.mocked(createRecommendation).mockResolvedValue(mockRecommendationRecord);
+  vi.mocked(findRecentRecommendation).mockResolvedValue(null);
+});
 
 describe('MCP tools/list', () => {
   it('returns exactly 5 registered tools', async () => {
     const data = await callMcp('tools/list', {});
-expect(data.result.tools!).toHaveLength(5);
+    expect(data.result.tools!).toHaveLength(5);
     expect(data.result.tools!.map((t: { name: string }) => t.name)).toEqual([
       'get_brewing_methods',
       'recommend',
@@ -78,7 +108,7 @@ describe('MCP tool: get_brewing_methods', () => {
 });
 
 describe('MCP tool: recommend', () => {
-  it('returns brew params when brewing_method_id matches a known method', async () => {
+  it('returns full Recommendation shape when brewing_method_id matches', async () => {
     vi.mocked(getBrewingMethods).mockResolvedValue([mockMethod]);
 
     const data = await callMcp('tools/call', {
@@ -91,6 +121,10 @@ describe('MCP tool: recommend', () => {
     expect(result.input.origin).toBe('Colombia');
     expect(result.input.roast_level).toBe('medium');
     expect(result.confidence).toBe('low');
+    // New Recommendation shape fields
+    expect(Array.isArray(result.sources)).toBe(true);
+    expect(typeof result.data_points_used).toBe('number');
+    expect(typeof result.id).toBe('number');
   });
 
   it('returns isError when brewing_method_id does not match', async () => {
@@ -131,7 +165,8 @@ describe('MCP tool: log_brew', () => {
       rating: 4,
       notes: 'Bright and clean',
     };
-    const saved: Brew = { ...brewArgs, id: 1, created_at: '2026-05-25T00:00:00Z' };
+    const saved: Brew = { ...brewArgs, id: 1, created_at: '2026-05-25T00:00:00Z',
+      source: 'user_submitted' };
     vi.mocked(addBrew).mockResolvedValue(saved);
 
     const data = await callMcp('tools/call', { name: 'log_brew', arguments: brewArgs });
@@ -139,7 +174,49 @@ describe('MCP tool: log_brew', () => {
     const result = JSON.parse(data.result.content![0].text);
     expect(result.id).toBe(1);
     expect(result.message).toBe('Brew record added successfully');
-    expect(vi.mocked(addBrew)).toHaveBeenCalledWith(brewArgs);
+    // resolveOrigin with no matching origins returns input as-is, so origin is unchanged
+    expect(vi.mocked(addBrew)).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: 'Colombia' }),
+    );
+  });
+});
+
+describe('MCP tool: log_brew — field_confidence.origin storage', () => {
+  const brewArgs = {
+    brewing_method_id: 1,
+    roast_level: 'medium',
+    grind_size: 'medium-fine',
+    water_temp_c: 93,
+    ratio: 0.0625,
+    brew_time_s: 180,
+    rating: 4,
+  };
+
+  it('stores origin: 1.0 when origin exactly matches a known origin', async () => {
+    const mockOrigins = [
+      { id: 1, name: 'Colombia', region: 'South America', aliases: 'Colombian', is_verified: true },
+    ];
+    vi.mocked(getOrigins).mockResolvedValue(mockOrigins);
+    vi.mocked(addBrew).mockResolvedValue({
+      ...brewArgs, id: 1, origin: 'Colombia', created_at: '', source: 'user_submitted' as const,
+    });
+
+    await callMcp('tools/call', { name: 'log_brew', arguments: { ...brewArgs, origin: 'Colombia' } });
+
+    const conf = JSON.parse(vi.mocked(addBrew).mock.calls[0][0].field_confidence!);
+    expect(conf.origin).toBe(1.0);
+  });
+
+  it('stores origin: 0.5 when origin is unknown (pass-through)', async () => {
+    vi.mocked(getOrigins).mockResolvedValue([]); // no origins → unknown
+    vi.mocked(addBrew).mockResolvedValue({
+      ...brewArgs, id: 1, origin: 'Bali Blue Moon', created_at: '', source: 'user_submitted' as const,
+    });
+
+    await callMcp('tools/call', { name: 'log_brew', arguments: { ...brewArgs, origin: 'Bali Blue Moon' } });
+
+    const conf = JSON.parse(vi.mocked(addBrew).mock.calls[0][0].field_confidence!);
+    expect(conf.origin).toBe(0.5);
   });
 });
 
@@ -150,6 +227,7 @@ describe('MCP tool: search_brews', () => {
       brews: [
         {
           id: 1,
+          brewing_method_id: 1,
           brewing_method: 'Pour Over',
           origin: 'Colombia',
           roast_level: 'medium',
@@ -160,6 +238,7 @@ describe('MCP tool: search_brews', () => {
           rating: 4,
           notes: undefined,
           created_at: '2026-05-25T10:30:00Z',
+          source: 'user_submitted',
         },
       ],
     };
@@ -191,6 +270,7 @@ describe('MCP tool: compare_brew', () => {
       rating: 4,
       notes: 'A bit bitter',
       created_at: '2026-05-25T10:30:00Z',
+      source: 'user_submitted',
     };
     vi.mocked(getBrewById).mockResolvedValue(mockBrew);
     vi.mocked(getBrewingMethods).mockResolvedValue([mockMethod]);

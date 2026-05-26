@@ -8,10 +8,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Planned
-- AI-powered `recommend` tool backed by a real LLM via OpenRouter (replacing the static method lookup)
 - Narrative parsing: unstructured user text → structured brew data (LLM extraction)
 - Scheduled scraping pipeline: Reddit + coffee forums → auto-ingest community brew data
 - Persistent storage migration from sql.js (file-based) to a hosted DB (Supabase / Turso)
+
+---
+
+## [2.0.1] — 2026-05-26
+
+### Added
+- `GET /origins` REST endpoint — returns all 20 seeded coffee origins with region, subregion, aliases
+- `field_confidence.origin` stored on every logged brew: `1.0` (exact/alias match), `0.7` (fuzzy resolved), `0.5` (unknown pass-through)
+- `originConf` factor in `computeBestBrew` scoring — brews with imprecise origins now contribute proportionally less to consensus, preventing fuzzy-resolved origins from inflating `high` confidence recommendations
+- `BrewWithMethod` now carries `field_confidence` — available to scoring engine and future callers
+- 53 tests (was 43) — 10 new tests cover origin confidence storage and scoring degradation
+- `docs/plans/trust-schema-wiring/` — plan, ACs (21/21 PASS), and review report for this session
+- `docs/architecture/overview.md` — full rewrite: v3 data model, recommendation engine algorithm, feedback loop diagram, origin verification gap analysis
+
+### Changed
+- `POST /brews` and MCP `log_brew` always resolve origin via `resolveOrigin()` and persist confidence
+- `docs/plans/` reorganized from flat prefixed files to `{feature}/` subdirectories
+- `docs/roadmap.md` — Phase 2 deterministic consensus marked complete
+- `docs/API-SPEC.md` — `POST /recommend` response updated with `id`, `sources`, `data_points_used`; `GET /origins` added
 
 ---
 
@@ -31,7 +49,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `search_brews` MCP tool — filter brew logs by origin, method, limit
 - Five MCP tools total (was four)
 - Removed standalone `mcp-server/` — unified under single code path in `src/`
-- `docs/plans/mvp-autonomous-plan.md` — master plan for 3 autonomous build sessions
+- `docs/plans/mvp-autonomous/plan.md` — master plan for 3 autonomous build sessions
 
 ### Fixed
 - `compare_brew` MCP tool — real deltas (was hardcoded "80% match")
