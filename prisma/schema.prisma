@@ -43,7 +43,7 @@ model Brew {
   brew_time_s          Int
   rating               Int
   notes                String?
-  created_at           DateTime                 @default(now())
+  created_at           DateTime                 @default(now()) @db.Timestamptz(3)
   source               String                   @default("user_submitted")
   source_url           String?
   field_confidence     String?
@@ -67,7 +67,7 @@ model Recommendation {
   confidence_breakdown String?
   sources              String?
   fingerprint          String                   @unique
-  created_at           DateTime                 @default(now())
+  created_at           DateTime                 @default(now()) @db.Timestamptz(3)
   brewing_method       BrewingMethod            @relation(fields: [brewing_method_id], references: [id])
   brew_links           BrewRecommendationLink[]
 
@@ -78,7 +78,7 @@ model BrewRecommendationLink {
   brew_id           Int
   recommendation_id Int
   match_confidence  Float
-  linked_at         DateTime       @default(now())
+  linked_at         DateTime       @default(now()) @db.Timestamptz(3)
   brew              Brew           @relation(fields: [brew_id], references: [id])
   recommendation    Recommendation @relation(fields: [recommendation_id], references: [id])
 

@@ -251,7 +251,7 @@ export async function linkBrewToRecommendation(
 ): Promise<BrewRecommendationLink> {
   const r = await prisma.brewRecommendationLink.upsert({
     where: { brew_id_recommendation_id: { brew_id: brewId, recommendation_id: recommendationId } },
-    update: { match_confidence: matchConfidence },
+    update: { match_confidence: matchConfidence, linked_at: new Date() },
     create: { brew_id: brewId, recommendation_id: recommendationId, match_confidence: matchConfidence },
   });
   return {
