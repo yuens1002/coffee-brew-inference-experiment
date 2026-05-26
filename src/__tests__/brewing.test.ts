@@ -38,6 +38,7 @@ const mockBrews: { count: number; brews: BrewWithMethod[] } = {
       rating: 4,
       notes: 'A bit bitter, extracted too fast',
       created_at: '2026-05-25T10:30:00Z',
+    source: 'user_submitted',
     },
   ],
 };
@@ -54,6 +55,7 @@ const mockBrew: Brew = {
   rating: 4,
   notes: 'A bit bitter',
   created_at: '2026-05-25T10:30:00Z',
+    source: 'user_submitted',
 };
 
 const validBrewPayload = {
@@ -66,6 +68,9 @@ const validBrewPayload = {
   brew_time_s: 180,
   rating: 4,
   notes: 'Bright and clean',
+  source: 'user_submitted' as const,
+  source_url: undefined,
+  field_confidence: undefined,
 };
 
 beforeEach(() => vi.resetAllMocks());
@@ -103,7 +108,8 @@ describe('GET /brews', () => {
 
 describe('POST /brews', () => {
   it('creates a brew and returns 201 with id and message', async () => {
-    const saved: Brew = { ...validBrewPayload, id: 1, created_at: '2026-05-25T00:00:00Z' };
+    const saved: Brew = { ...validBrewPayload, id: 1, created_at: '2026-05-25T00:00:00Z',
+      source: 'user_submitted' };
     vi.mocked(addBrew).mockResolvedValue(saved);
 
     const res = await brewingRoutes.request('/brews', {

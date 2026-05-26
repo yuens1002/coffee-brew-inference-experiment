@@ -1,10 +1,16 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { getBrewingMethods, getBrews, getBrewById, addBrew } from '../lib/db.js';
-import type { BrewingMethod, Brew } from '../types.js';
+import { getBrewingMethods, getBrews, getBrewById, addBrew, getOrigins } from '../lib/db.js';
+import type { BrewingMethod, Brew, BrewSource } from '../types.js';
 
 const app = new Hono();
+
+// GET /origins
+app.get('/origins', async (c) => {
+  const origins = await getOrigins();
+  return c.json(origins);
+});
 
 // GET /brewing-methods
 app.get('/brewing-methods', async (c) => {
@@ -44,11 +50,27 @@ const brewSchema = z.object({
   brew_time_s: z.number(),
   rating: z.number().min(1).max(5),
   notes: z.string().optional(),
+  source: z.string().optional(),
+  source_url: z.string().optional(),
+  field_confidence: z.string().optional(),
 });
 
 app.post('/brews', zValidator('json', brewSchema), async (c) => {
   const data = c.req.valid('json');
-  const brew = await addBrew(data);
+  const brew = await addBrew({
+    brewing_method_id: data.brewing_method_id,
+    origin: data.origin,
+    roast_level: data.roast_level,
+    grind_size: data.grind_size,
+    water_temp_c: data.water_temp_c,
+    ratio: data.ratio,
+    brew_time_s: data.brew_time_s,
+    rating: data.rating,
+    notes: data.notes,
+    source: (data.source as BrewSource) || ('user_submitted' as BrewSource),
+    source_url: data.source_url,
+    field_confidence: data.field_confidence,
+  });
   return c.json({ id: brew.id, message: 'Brew record added successfully' }, 201);
 });
 

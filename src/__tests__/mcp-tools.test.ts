@@ -131,7 +131,8 @@ describe('MCP tool: log_brew', () => {
       rating: 4,
       notes: 'Bright and clean',
     };
-    const saved: Brew = { ...brewArgs, id: 1, created_at: '2026-05-25T00:00:00Z' };
+    const saved: Brew = { ...brewArgs, id: 1, created_at: '2026-05-25T00:00:00Z',
+      source: 'user_submitted' };
     vi.mocked(addBrew).mockResolvedValue(saved);
 
     const data = await callMcp('tools/call', { name: 'log_brew', arguments: brewArgs });
@@ -160,6 +161,7 @@ describe('MCP tool: search_brews', () => {
           rating: 4,
           notes: undefined,
           created_at: '2026-05-25T10:30:00Z',
+    source: 'user_submitted',
         },
       ],
     };
@@ -191,6 +193,7 @@ describe('MCP tool: compare_brew', () => {
       rating: 4,
       notes: 'A bit bitter',
       created_at: '2026-05-25T10:30:00Z',
+    source: 'user_submitted',
     };
     vi.mocked(getBrewById).mockResolvedValue(mockBrew);
     vi.mocked(getBrewingMethods).mockResolvedValue([mockMethod]);
