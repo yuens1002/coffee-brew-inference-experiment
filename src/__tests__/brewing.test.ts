@@ -195,6 +195,90 @@ describe('POST /brews', () => {
   });
 });
 
+describe('POST /brews — field_confidence.origin storage', () => {
+  const basePayload = {
+    brewing_method_id: 1,
+    roast_level: 'medium',
+    grind_size: 'medium-fine',
+    water_temp_c: 93,
+    ratio: 0.0625,
+    brew_time_s: 180,
+    rating: 4,
+  };
+  const mockSaved: Brew = { ...basePayload, id: 1, origin: '', created_at: '', source: 'user_submitted' };
+
+  it('stores origin: 1.0 for exact match', async () => {
+    vi.mocked(getOrigins).mockResolvedValue(mockOrigins); // includes Colombia (is_verified: true)
+    vi.mocked(addBrew).mockResolvedValue({ ...mockSaved, origin: 'Colombia' });
+
+    await brewingRoutes.request('/brews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...basePayload, origin: 'Colombia' }),
+    });
+
+    const conf = JSON.parse(vi.mocked(addBrew).mock.calls[0][0].field_confidence!);
+    expect(conf.origin).toBe(1.0);
+  });
+
+  it('stores origin: 1.0 for alias match', async () => {
+    vi.mocked(getOrigins).mockResolvedValue(mockOrigins); // Colombia has alias 'Colombian'
+    vi.mocked(addBrew).mockResolvedValue({ ...mockSaved, origin: 'Colombia' });
+
+    await brewingRoutes.request('/brews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...basePayload, origin: 'Colombian' }),
+    });
+
+    const conf = JSON.parse(vi.mocked(addBrew).mock.calls[0][0].field_confidence!);
+    expect(conf.origin).toBe(1.0);
+  });
+
+  it('stores origin: 0.7 for fuzzy (partial name) match', async () => {
+    vi.mocked(getOrigins).mockResolvedValue(mockOrigins); // 'Colomb' substring-matches 'Colombia'
+    vi.mocked(addBrew).mockResolvedValue({ ...mockSaved, origin: 'Colombia' });
+
+    await brewingRoutes.request('/brews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...basePayload, origin: 'Colomb' }),
+    });
+
+    const conf = JSON.parse(vi.mocked(addBrew).mock.calls[0][0].field_confidence!);
+    expect(conf.origin).toBe(0.7);
+  });
+
+  it('stores origin: 0.5 for unknown origin (pass-through)', async () => {
+    vi.mocked(getOrigins).mockResolvedValue([]); // no origins → unknown
+    vi.mocked(addBrew).mockResolvedValue({ ...mockSaved, origin: 'Bali Blue Moon' });
+
+    await brewingRoutes.request('/brews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...basePayload, origin: 'Bali Blue Moon' }),
+    });
+
+    const conf = JSON.parse(vi.mocked(addBrew).mock.calls[0][0].field_confidence!);
+    expect(conf.origin).toBe(0.5);
+  });
+
+  it('merges computed origin confidence with user-supplied field_confidence', async () => {
+    vi.mocked(getOrigins).mockResolvedValue(mockOrigins);
+    vi.mocked(addBrew).mockResolvedValue({ ...mockSaved, origin: 'Colombia' });
+
+    await brewingRoutes.request('/brews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...basePayload, origin: 'Colombia', field_confidence: '{"notes":0.9}' }),
+    });
+
+    const conf = JSON.parse(vi.mocked(addBrew).mock.calls[0][0].field_confidence!);
+    expect(conf.origin).toBe(1.0);
+    expect(conf.notes).toBe(0.9);
+  });
+});
+
 describe('GET /brews/:id', () => {
   it('returns a single brew by ID', async () => {
     vi.mocked(getBrewById).mockResolvedValue(mockBrew);

@@ -274,6 +274,7 @@ export async function getBrews(filters?: {
       created_at: row.created_at as string,
       source: (row.source as BrewSource) || 'user_submitted',
       source_url: (row.source_url as string) || undefined,
+      field_confidence: (row.field_confidence as string) || undefined,
     });
   }
   stmt.free();

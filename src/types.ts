@@ -132,4 +132,5 @@ export interface BrewWithMethod {
   created_at: string;
   source: BrewSource;
   source_url?: string;
+  field_confidence?: string; // JSON-serialized FieldConfidence; used by computeBestBrew scoring
 }

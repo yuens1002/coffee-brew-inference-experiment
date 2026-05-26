@@ -125,6 +125,53 @@ describe('computeBestBrew — high confidence (≥3 quality matches)', () => {
   });
 });
 
+describe('computeBestBrew — origin confidence degrades scoring', () => {
+  it('drops confidence from high to medium when brews have field_confidence.origin = 0.5', async () => {
+    // 3 brews matching origin+roast at rating 5 normally yields high confidence (totalWeight > 1.5).
+    // With originConf = 0.5 each score is halved, pushing totalWeight below the 1.5 high threshold.
+    vi.mocked(getBrewingMethods).mockResolvedValue([mockMethod]);
+    const lowConfBrews = [
+      makeBrew({ id: 1, rating: 5, field_confidence: '{"origin":0.5}' }),
+      makeBrew({ id: 2, rating: 5, field_confidence: '{"origin":0.5}' }),
+      makeBrew({ id: 3, rating: 5, field_confidence: '{"origin":0.5}' }),
+    ];
+    vi.mocked(getBrews).mockResolvedValue({ count: 3, brews: lowConfBrews });
+
+    const result = await computeBestBrew({ brewing_method_id: 1, origin: 'Colombia', roast_level: 'medium' });
+
+    // High needs totalWeight > 1.5; with originConf=0.5 each score ≈ 0.3125, total ≈ 0.94 → medium
+    expect(result.confidence).toBe('medium');
+  });
+
+  it('preserves high confidence when field_confidence is absent (defaults to 1.0)', async () => {
+    vi.mocked(getBrewingMethods).mockResolvedValue([mockMethod]);
+    const highRatedBrews = [
+      makeBrew({ id: 1, rating: 5 }),
+      makeBrew({ id: 2, rating: 5 }),
+      makeBrew({ id: 3, rating: 5 }),
+    ];
+    vi.mocked(getBrews).mockResolvedValue({ count: 3, brews: highRatedBrews });
+
+    const result = await computeBestBrew({ brewing_method_id: 1, origin: 'Colombia', roast_level: 'medium' });
+
+    expect(result.confidence).toBe('high');
+  });
+
+  it('handles malformed field_confidence JSON gracefully (defaults to 1.0)', async () => {
+    vi.mocked(getBrewingMethods).mockResolvedValue([mockMethod]);
+    const brews = [
+      makeBrew({ id: 1, rating: 5, field_confidence: 'not-json' }),
+      makeBrew({ id: 2, rating: 5, field_confidence: 'not-json' }),
+      makeBrew({ id: 3, rating: 5, field_confidence: 'not-json' }),
+    ];
+    vi.mocked(getBrews).mockResolvedValue({ count: 3, brews: brews });
+
+    // Malformed JSON → originConf defaults to 1.0 → should still reach high
+    const result = await computeBestBrew({ brewing_method_id: 1, origin: 'Colombia', roast_level: 'medium' });
+    expect(result.confidence).toBe('high');
+  });
+});
+
 describe('computeBestBrew — throws when no methods available', () => {
   it('rejects with "No brewing methods available" when methods list is empty', async () => {
     vi.mocked(getBrewingMethods).mockResolvedValue([]);

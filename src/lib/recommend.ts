@@ -62,6 +62,21 @@ function sourceTrust(source: string): number {
   return 0.5;
 }
 
+/**
+ * Origin confidence from field_confidence JSON.
+ * 1.0 = verified exact/alias, 0.7 = fuzzy resolved, 0.5 = unknown pass-through.
+ * Defaults to 1.0 when absent (backward-compatible with brews logged before this field was stored).
+ */
+function originConf(brew: BrewWithMethod): number {
+  if (!brew.field_confidence) return 1.0;
+  try {
+    const conf = JSON.parse(brew.field_confidence) as { origin?: number };
+    return conf.origin ?? 1.0;
+  } catch {
+    return 1.0;
+  }
+}
+
 // ── Weighted Average Helpers ────────────────────────────
 
 function weightedAvg(
@@ -134,7 +149,7 @@ export async function computeBestBrew(
     .filter(({ matchScore: ms }) => ms > 0)
     .map(({ brew, matchScore: ms }) => ({
       brew,
-      score: ms * (brew.rating / 5) * recencyDecay(brew.created_at) * sourceTrust(brew.source),
+      score: ms * (brew.rating / 5) * recencyDecay(brew.created_at) * sourceTrust(brew.source) * originConf(brew),
     }))
     .sort((a, b) => b.score - a.score);
 

@@ -68,8 +68,14 @@ function buildMcpServer(): McpServer {
       },
     },
     async (params) => {
-      const resolvedOrigin = params.origin ? (await resolveOrigin(params.origin)).resolved : (params.origin || '');
-      const brew = await addBrew({ ...params, origin: resolvedOrigin } as Omit<Brew, 'id' | 'created_at'>);
+      const { resolved: resolvedOrigin, verified } = await resolveOrigin(params.origin);
+      const originConfValue = verified ? 1.0 : resolvedOrigin !== params.origin ? 0.7 : 0.5;
+      const fieldConfidence = JSON.stringify({ origin: originConfValue });
+      const brew = await addBrew({
+        ...params,
+        origin: resolvedOrigin,
+        field_confidence: fieldConfidence,
+      } as Omit<Brew, 'id' | 'created_at'>);
       tryLinkBrew(brew).catch(() => {}); // fire-and-forget implicit feedback link
       return { content: [{ type: 'text' as const, text: JSON.stringify({ id: brew.id, message: 'Brew record added successfully' }) }] };
     },

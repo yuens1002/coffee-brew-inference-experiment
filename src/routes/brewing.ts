@@ -58,9 +58,16 @@ const brewSchema = z.object({
 
 app.post('/brews', zValidator('json', brewSchema), async (c) => {
   const data = c.req.valid('json');
-  const { resolved: origin } = data.origin
-    ? await resolveOrigin(data.origin)
-    : { resolved: data.origin };
+  const { resolved: origin, verified } = await resolveOrigin(data.origin);
+
+  // Compute origin confidence from resolution quality and merge into field_confidence
+  const originConfValue = verified ? 1.0 : origin !== data.origin ? 0.7 : 0.5;
+  let base: Record<string, unknown> = {};
+  if (data.field_confidence) {
+    try { base = JSON.parse(data.field_confidence); } catch { /* ignore invalid JSON */ }
+  }
+  const fieldConfidence = JSON.stringify({ ...base, origin: originConfValue });
+
   const brew = await addBrew({
     brewing_method_id: data.brewing_method_id,
     origin,
@@ -73,7 +80,7 @@ app.post('/brews', zValidator('json', brewSchema), async (c) => {
     notes: data.notes,
     source: (data.source as BrewSource) || ('user_submitted' as BrewSource),
     source_url: data.source_url,
-    field_confidence: data.field_confidence,
+    field_confidence: fieldConfidence,
   });
   tryLinkBrew(brew).catch(() => {}); // fire-and-forget implicit feedback link
   return c.json({ id: brew.id, message: 'Brew record added successfully' }, 201);

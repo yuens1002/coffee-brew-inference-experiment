@@ -181,6 +181,45 @@ describe('MCP tool: log_brew', () => {
   });
 });
 
+describe('MCP tool: log_brew — field_confidence.origin storage', () => {
+  const brewArgs = {
+    brewing_method_id: 1,
+    roast_level: 'medium',
+    grind_size: 'medium-fine',
+    water_temp_c: 93,
+    ratio: 0.0625,
+    brew_time_s: 180,
+    rating: 4,
+  };
+
+  it('stores origin: 1.0 when origin exactly matches a known origin', async () => {
+    const mockOrigins = [
+      { id: 1, name: 'Colombia', region: 'South America', aliases: 'Colombian', is_verified: true },
+    ];
+    vi.mocked(getOrigins).mockResolvedValue(mockOrigins);
+    vi.mocked(addBrew).mockResolvedValue({
+      ...brewArgs, id: 1, origin: 'Colombia', created_at: '', source: 'user_submitted' as const,
+    });
+
+    await callMcp('tools/call', { name: 'log_brew', arguments: { ...brewArgs, origin: 'Colombia' } });
+
+    const conf = JSON.parse(vi.mocked(addBrew).mock.calls[0][0].field_confidence!);
+    expect(conf.origin).toBe(1.0);
+  });
+
+  it('stores origin: 0.5 when origin is unknown (pass-through)', async () => {
+    vi.mocked(getOrigins).mockResolvedValue([]); // no origins → unknown
+    vi.mocked(addBrew).mockResolvedValue({
+      ...brewArgs, id: 1, origin: 'Bali Blue Moon', created_at: '', source: 'user_submitted' as const,
+    });
+
+    await callMcp('tools/call', { name: 'log_brew', arguments: { ...brewArgs, origin: 'Bali Blue Moon' } });
+
+    const conf = JSON.parse(vi.mocked(addBrew).mock.calls[0][0].field_confidence!);
+    expect(conf.origin).toBe(0.5);
+  });
+});
+
 describe('MCP tool: search_brews', () => {
   it('returns filtered brew results', async () => {
     const mockResult: { count: number; brews: BrewWithMethod[] } = {
