@@ -1,15 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { BrewingMethod, Brew, BrewWithMethod } from '../types.js';
+import type { BrewingMethod, Brew, BrewWithMethod, Origin, RecommendationRecord } from '../types.js';
 
 vi.mock('../lib/db.js', () => ({
   getBrewingMethods: vi.fn(),
   getBrews: vi.fn(),
   getBrewById: vi.fn(),
   addBrew: vi.fn(),
+  getOrigins: vi.fn(),
+  searchOrigins: vi.fn(),
+  createRecommendation: vi.fn(),
+  findRecentRecommendation: vi.fn(),
+  linkBrewToRecommendation: vi.fn(),
 }));
 
 import brewingRoutes from '../routes/brewing.js';
-import { getBrewingMethods, addBrew, getBrews, getBrewById } from '../lib/db.js';
+import {
+  getBrewingMethods, addBrew, getBrews, getBrewById,
+  getOrigins, createRecommendation, findRecentRecommendation,
+} from '../lib/db.js';
 
 const mockMethods: BrewingMethod[] = [
   {
@@ -22,6 +30,26 @@ const mockMethods: BrewingMethod[] = [
     default_ratio: 0.0625,
   },
 ];
+
+const mockOrigins: Origin[] = [
+  { id: 1, name: 'Colombia', region: 'South America', aliases: 'Colombian,Columbia', is_verified: true },
+  { id: 2, name: 'Ethiopia', region: 'Africa', aliases: 'Ethiopean,Ethopian', is_verified: true },
+];
+
+const mockRecommendationRecord: RecommendationRecord = {
+  id: 1,
+  brewing_method_id: 1,
+  origin: 'Colombia',
+  roast_level: 'medium',
+  grind_size: 'medium-fine',
+  water_temp_c: 93,
+  ratio: 0.0625,
+  brew_time_s: 210,
+  recommendation: 'No community data yet — using Pour Over defaults.',
+  confidence: 'low',
+  fingerprint: 'colombia-medium-1-1234567890',
+  created_at: '2026-05-26T00:00:00Z',
+};
 
 const mockBrews: { count: number; brews: BrewWithMethod[] } = {
   count: 1,
@@ -38,7 +66,7 @@ const mockBrews: { count: number; brews: BrewWithMethod[] } = {
       rating: 4,
       notes: 'A bit bitter, extracted too fast',
       created_at: '2026-05-25T10:30:00Z',
-    source: 'user_submitted',
+      source: 'user_submitted',
     },
   ],
 };
@@ -55,7 +83,7 @@ const mockBrew: Brew = {
   rating: 4,
   notes: 'A bit bitter',
   created_at: '2026-05-25T10:30:00Z',
-    source: 'user_submitted',
+  source: 'user_submitted',
 };
 
 const validBrewPayload = {
@@ -73,7 +101,25 @@ const validBrewPayload = {
   field_confidence: undefined,
 };
 
-beforeEach(() => vi.resetAllMocks());
+beforeEach(() => {
+  vi.resetAllMocks();
+  // Defaults so computeBestBrew + resolveOrigin + tryLinkBrew work in all tests
+  vi.mocked(getOrigins).mockResolvedValue([]);
+  vi.mocked(getBrews).mockResolvedValue({ count: 0, brews: [] });
+  vi.mocked(createRecommendation).mockResolvedValue(mockRecommendationRecord);
+  vi.mocked(findRecentRecommendation).mockResolvedValue(null);
+});
+
+describe('GET /origins', () => {
+  it('returns all origins as JSON', async () => {
+    vi.mocked(getOrigins).mockResolvedValue(mockOrigins);
+
+    const res = await brewingRoutes.request('/origins');
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual(mockOrigins);
+  });
+});
 
 describe('GET /brewing-methods', () => {
   it('returns all brewing methods as JSON', async () => {
@@ -122,7 +168,10 @@ describe('POST /brews', () => {
     const body = await res.json();
     expect(body.id).toBe(1);
     expect(body.message).toBe('Brew record added successfully');
-    expect(vi.mocked(addBrew)).toHaveBeenCalledWith(validBrewPayload);
+    // resolveOrigin with no matching origins returns input as-is
+    expect(vi.mocked(addBrew)).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: validBrewPayload.origin }),
+    );
   });
 
   it('rejects a payload missing required fields with 400', async () => {
@@ -197,7 +246,7 @@ describe('GET /brews/:id/compare', () => {
 });
 
 describe('POST /recommend', () => {
-  it('returns a recommendation using the specified method', async () => {
+  it('returns a full Recommendation using the specified method', async () => {
     vi.mocked(getBrewingMethods).mockResolvedValue(mockMethods);
 
     const res = await brewingRoutes.request('/recommend', {
@@ -212,6 +261,10 @@ describe('POST /recommend', () => {
     expect(body.recommendation).toBeDefined();
     expect(body.confidence).toBeDefined();
     expect(body.input.origin).toBe('Colombia');
+    // New Recommendation shape fields
+    expect(Array.isArray(body.sources)).toBe(true);
+    expect(typeof body.data_points_used).toBe('number');
+    expect(typeof body.id).toBe('number');
   });
 
   it('falls back to first method when no method_id provided', async () => {

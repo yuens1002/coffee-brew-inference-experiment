@@ -110,7 +110,7 @@ export async function computeBestBrew(
   const method = params.brewing_method_id
     ? methods.find((m) => m.id === params.brewing_method_id)
     : methods[0];
-  if (!method) throw new Error('No brewing methods available');
+  if (!method) throw new Error(params.brewing_method_id ? 'Brewing method not found' : 'No brewing methods available');
 
   // Determine data points provided
   let dataPoints = 0;
