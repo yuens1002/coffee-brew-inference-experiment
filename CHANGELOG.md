@@ -31,7 +31,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `search_brews` MCP tool — filter brew logs by origin, method, limit
 - Five MCP tools total (was four)
 - Removed standalone `mcp-server/` — unified under single code path in `src/`
-- `docs/plans/mvp-autonomous-plan.md` — master plan for 3 autonomous build sessions
+- `docs/plans/mvp-autonomous/plan.md` — master plan for 3 autonomous build sessions
 
 ### Fixed
 - `compare_brew` MCP tool — real deltas (was hardcoded "80% match")

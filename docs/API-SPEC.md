@@ -8,6 +8,25 @@
 
 ## Journey 1: "How?" — Query the Optimal Brew
 
+### `GET /origins`
+Returns all known coffee origins (seed data + discovered). Used for origin autocomplete and normalization.
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "name": "Ethiopia",
+    "region": "Africa",
+    "subregion": "Yirgacheffe, Sidamo, Guji, Harrar",
+    "aliases": "Ethiopean,Ethopian",
+    "is_verified": true
+  }
+]
+```
+
+---
+
 ### `GET /brewing-methods`
 Returns all available brewing methods to populate the dropdown.
 
@@ -31,24 +50,21 @@ Returns all available brewing methods to populate the dropdown.
 ### `POST /recommend`
 **User Question:** *"I have Colombian medium roast and want to use Pour Over — how should I brew it?"*
 
-Returns AI-powered brew recommendation via DSPy inference.
+Returns a brew recommendation computed from weighted consensus over logged brew history. Origin is normalized via `resolveOrigin` before matching. Confidence is `high` (≥3 quality matches), `medium` (1–2 matches, blended with method defaults), or `low` (no matches, pure method defaults).
 
 **Request:**
 ```json
 {
   "brewing_method_id": 1,
   "origin": "Colombia",
-  "roast_level": "medium",
-  "grind_size": "medium-fine",
-  "water_temp_c": 93,
-  "ratio": 0.0625,
-  "brew_time_s": 210
+  "roast_level": "medium"
 }
 ```
 
 **Response:**
 ```json
 {
+  "id": 1,
   "brewing_method": "Pour Over",
   "input": {
     "origin": "Colombia",
@@ -58,8 +74,10 @@ Returns AI-powered brew recommendation via DSPy inference.
     "ratio": 0.0625,
     "brew_time_s": 210
   },
-  "recommendation": "Good baseline. For brighter notes, try 90°C water and 1:17 ratio (0.0588). Slightly coarser grind can also help highlight floral notes.",
-  "confidence": "high"
+  "recommendation": "No community data yet — using Pour Over defaults. For Colombia (medium roast), try Pour Over at 93°C with a medium-fine grind, 210s brew time, 1:16 ratio.",
+  "confidence": "low",
+  "sources": [],
+  "data_points_used": 0
 }
 ```
 
@@ -159,8 +177,8 @@ Compares a logged brew against what the AI would have recommended.
 
 | Journey | Endpoint(s) | Purpose |
 |---------|--------------|---------|
-| **"How?"** | `GET /brewing-methods` → `POST /recommend` | Get AI brew recommendation |
-| **"Real Experience"** | `POST /brews` → `GET /brews/:id/compare` | Log brew → validate against AI |
+| **"How?"** | `GET /origins`, `GET /brewing-methods` → `POST /recommend` | Normalize origin, pick method, get recommendation |
+| **"Real Experience"** | `POST /brews` → `GET /brews/:id/compare` | Log brew → compare against method baseline |
 
 ---
 

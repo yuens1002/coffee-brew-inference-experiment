@@ -4,16 +4,16 @@ Tracks planned work by phase. Completed items move to `CHANGELOG.md`.
 
 ---
 
-## Phase 2 — LLM Inference
+## Phase 2 — Recommendation Engine
 
-Replace static stub responses with real AI-powered recommendations.
+Replace static stub responses with real recommendations backed by logged brew data.
 
 - [x] `compare_brew` tool — delta analysis between logged brew and method baseline
-- [ ] `recommend` tool — wire OpenRouter to generate brew advice from origin + roast + method
-- [ ] Structured reasoning output with real confidence scoring
+- [x] `recommend` tool — wired as deterministic community consensus (`computeBestBrew`): weighted scoring by origin/roast/method similarity, recency decay, source trust; confidence: high/medium/low based on match count and quality
+- [x] Structured confidence scoring with `sources` attribution and `data_points_used`
 
 **Owner**: `/backend-architect`  
-**Depends on**: `OPENROUTER_API_KEY` in environment
+**Note**: Implemented as deterministic consensus over logged brews (no LLM/OpenRouter dependency). LLM-powered narrative recommendations remain a future option once community data volume justifies it.
 
 ---
 
