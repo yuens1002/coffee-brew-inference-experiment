@@ -339,7 +339,7 @@ export async function addBrew(brew: Omit<Brew, 'id' | 'created_at'> & { source?:
 
 // ── Recommendations ─────────────────────────────────────
 
-export async function createRecommendation(rec: Omit<RecommendationRecord, 'id' | 'created_at'>): Promise<RecommendationRecord> {
+export async function createRecommendation(rec: Omit<RecommendationRecord, 'id' | 'created_at' | 'fingerprint'>): Promise<RecommendationRecord> {
   const database = await getDB();
   const created_at = new Date().toISOString();
   const fingerprint = `${(rec.origin || 'unknown').toLowerCase()}-${(rec.roast_level || 'unknown').toLowerCase()}-${rec.brewing_method_id}-${Math.floor(Date.now() / 1000)}`;
