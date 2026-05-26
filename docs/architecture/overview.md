@@ -166,30 +166,17 @@ This data is **captured now but not yet consumed** — the link table is the fou
 | Fuzzy (name substring) | `false` | `'Ethiop'` → `'Ethiopia'` |
 | Unknown (pass-through) | `false` | `'Bali Blue Moon'` → `'Bali Blue Moon'` |
 
-### Current gap
+### How origin confidence is stored and used
 
-`verified` is computed but discarded. A brew logged with `'Ethiop'` (fuzzy) gets resolved to `'Ethiopia'` and stored — but `field_confidence` is `undefined`. `computeBestBrew` later treats that brew identically to one explicitly logged as `'Ethiopia'`, giving it full origin match weight.
+When a brew is logged, `resolveOrigin` returns `{ resolved, verified }`. The route computes `field_confidence.origin` and stores it alongside the brew:
 
-### Intended improvement
-
-Three-step fix (planned, not yet implemented):
-
-**Step 1 — Store origin confidence when logging a brew:**
 ```
-verified === true                  → field_confidence.origin = 1.0
-verified === false, resolved ≠ raw → field_confidence.origin = 0.7  (fuzzy — likely right)
-verified === false, resolved === raw → field_confidence.origin = 0.5 (unknown — could be anything)
+verified === true                    → field_confidence.origin = 1.0
+verified === false, resolved ≠ raw  → field_confidence.origin = 0.7  (fuzzy — likely right)
+verified === false, resolved === raw → field_confidence.origin = 0.5  (unknown — could be anything)
 ```
 
-**Step 2 — Include `field_confidence` in `BrewWithMethod`** so `computeBestBrew` can read it. Currently absent from that type and the `getBrews` SQL projection.
-
-**Step 3 — Multiply origin confidence into the per-brew score:**
-```
-composite score = matchScore × (rating/5) × recencyDecay × sourceTrust × originConf
-```
-A fuzzy-resolved Ethiopia brew contributes at 70%; an unknown origin at 50%; a verified brew at 100%.
-
-**Why this matters over time:** as community data grows, the proportion of imprecisely-logged brews compounds. Without this, fuzzy-resolved brews inflate confidence in the consensus — a `high` confidence recommendation might be built on partially-guessed origins. With it, `high` confidence is earned only when enough *verified* origin data agrees, and the consensus strengthens organically as more brews are logged precisely.
+`computeBestBrew` reads `field_confidence.origin` via `originConf(brew)` and multiplies it into the composite score. Brews logged before this field was introduced default to `1.0` (backward-compatible). `high` confidence is earned only when enough verified-origin data agrees.
 
 ## Origin policy
 
@@ -212,7 +199,6 @@ Railway project: `brew-guide` — auto-deploys from `main` on `yuens1002/brew-gu
 ## Planned evolution
 
 See `docs/roadmap.md`. Highest-priority gaps:
-1. Store + use origin `field_confidence` in scoring (see above)
-2. `compare_brew` — wire real delta analysis against stored recommendation (not method defaults)
-3. Scraping pipeline — auto-ingest community data from Reddit + forums
-4. Persistent storage — migrate from sql.js to Turso or Supabase
+1. `compare_brew` — wire `match_score` from `brew_recommendation_links` (currently hardcoded `0.5`)
+2. Scraping pipeline — auto-ingest community data from Reddit + forums
+3. Persistent storage — migrate from sql.js to Neon Postgres + Prisma (Phase 4)

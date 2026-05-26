@@ -46,10 +46,10 @@ Move off sql.js (in-process WASM) to a hosted database.
 
 Ship a stable, publicly reachable MCP endpoint.
 
-- [ ] Deploy to Fly.io or Railway (Node-compatible, persistent volume if keeping SQLite)
-- [ ] Set `DEV_SERVER_URL` → production URL in CLAUDE.md
+- [x] Deploy to Railway — auto-deploys from `main` on `yuens1002/brew-guide`
+- [x] Set `DEV_SERVER_URL` → production URL in CLAUDE.md
+- [x] Rate limiting — 60 req/min REST, 20 req/min MCP (`hono-rate-limiter`, #219d5fc)
 - [ ] Register with MCP directory / Claude Desktop config example in README
-- [ ] Rate limiting + auth token (optional, if public traffic is a concern)
 
 **Owner**: `/devops`
 

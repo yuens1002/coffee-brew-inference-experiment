@@ -106,7 +106,6 @@ app.get('/brews/:id/compare', async (c) => {
   const methods = await getBrewingMethods();
   const method = methods.find((m) => m.id === brew.brewing_method_id);
 
-  // Build comparison — stub analysis for now (LLM wired in Phase 2)
   const tempDelta = method ? brew.water_temp_c - method.default_temp_c : 0;
   const timeDelta = method ? brew.brew_time_s - method.default_brew_time_s : 0;
 

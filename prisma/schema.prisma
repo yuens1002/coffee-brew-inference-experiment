@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Origin {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  region      String
+  subregion   String?
+  aliases     String?
+  is_verified Boolean @default(true)
+
+  @@map("origins")
+}
+
+model BrewingMethod {
+  id                  Int              @id @default(autoincrement())
+  name                String           @unique
+  description         String?
+  default_temp_c      Int
+  grind_size          String
+  default_brew_time_s Int
+  default_ratio       Float
+  brews               Brew[]
+  recommendations     Recommendation[]
+
+  @@map("brewing_methods")
+}
+
+model Brew {
+  id                   Int                      @id @default(autoincrement())
+  brewing_method_id    Int
+  origin               String
+  roast_level          String
+  grind_size           String
+  water_temp_c         Int
+  ratio                Float
+  brew_time_s          Int
+  rating               Int
+  notes                String?
+  created_at           DateTime                 @default(now())
+  source               String                   @default("user_submitted")
+  source_url           String?
+  field_confidence     String?
+  brewing_method       BrewingMethod            @relation(fields: [brewing_method_id], references: [id])
+  recommendation_links BrewRecommendationLink[]
+
+  @@map("brews")
+}
+
+model Recommendation {
+  id                   Int                      @id @default(autoincrement())
+  brewing_method_id    Int
+  origin               String
+  roast_level          String
+  grind_size           String
+  water_temp_c         Int
+  ratio                Float
+  brew_time_s          Int
+  recommendation       String
+  confidence           String
+  confidence_breakdown String?
+  sources              String?
+  fingerprint          String                   @unique
+  created_at           DateTime                 @default(now())
+  brewing_method       BrewingMethod            @relation(fields: [brewing_method_id], references: [id])
+  brew_links           BrewRecommendationLink[]
+
+  @@map("recommendations")
+}
+
+model BrewRecommendationLink {
+  brew_id           Int
+  recommendation_id Int
+  match_confidence  Float
+  linked_at         DateTime       @default(now())
+  brew              Brew           @relation(fields: [brew_id], references: [id])
+  recommendation    Recommendation @relation(fields: [recommendation_id], references: [id])
+
+  @@id([brew_id, recommendation_id])
+  @@map("brew_recommendation_links")
+}
