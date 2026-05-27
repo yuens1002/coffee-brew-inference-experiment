@@ -7,8 +7,15 @@
  * Usage: npx tsx scripts/scrape-roasters.ts
  *
  * Requirements:
- *   - Dev server must be running: npm run dev
- *   - Server must be reachable at API_BASE (default http://localhost:4000, set API_BASE env var to override)
+  *   - Dev server must be running: npm run dev
+  *   - Server must be reachable at API_BASE (default http://localhost:4000, set API_BASE env var to override)
+  *   - DATABASE_URL must be set for the target database
+  *
+  * Idempotency: safe to re-run. The server deduplicates by brew content
+  * (same origin + method + roast + parameters = same fingerprint).
+  *
+  * Production usage:
+  *   API_BASE=https://brew-guide-production.up.railway.app npx tsx scripts/scrape-roasters.ts
  *
  * Data sourced from published brewing guides by:
  *   Pour Over: Blue Bottle, Counter Culture, Stumptown, Intelligentsia,
