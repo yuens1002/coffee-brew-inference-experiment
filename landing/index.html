@@ -160,7 +160,7 @@
       letter-spacing: 0.03em;
     }
 
-    select, input {
+    select, input[type="text"], input[type="number"] {
       width: 100%;
       background: var(--bg-input);
       border: 1px solid var(--border);
@@ -182,7 +182,7 @@
       padding-right: 36px;
     }
 
-    select:focus, input:focus {
+    select:focus, input[type="text"]:focus, input[type="number"]:focus {
       outline: none;
       border-color: var(--amber);
     }
@@ -190,6 +190,22 @@
     select option {
       background: #2c1e0f;
     }
+
+    textarea {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--cream);
+      font-family: inherit;
+      font-size: 15px;
+      padding: 11px 14px;
+      resize: vertical;
+      min-height: 90px;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { outline: none; border-color: var(--amber); }
+    textarea::placeholder { color: var(--muted); }
 
     .btn {
       display: block;
@@ -405,6 +421,129 @@
       border-radius: var(--radius);
       color: #e07070;
       font-size: 14px;
+    }
+
+    /* ── Slide wrapper ──────────────────────────────────────── */
+    .slide-wrapper {
+      position: relative;
+      overflow: hidden;
+      min-height: 220px;
+      transition: height 0.4s ease;
+    }
+
+    .slide-face {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      transition: transform 0.4s ease;
+    }
+
+    #faceA { transform: translateX(0); }
+    #faceB { transform: translateX(100%); }
+
+    .slide-wrapper.show-b #faceA { transform: translateX(-100%); }
+    .slide-wrapper.show-b #faceB { transform: translateX(0); }
+
+    /* ── Combobox ────────────────────────────────────────────── */
+    .combobox-wrap { position: relative; }
+
+    .combobox-dropdown {
+      position: absolute;
+      top: calc(100% - 1px);
+      left: 0;
+      right: 0;
+      background: var(--bg-input);
+      border: 1px solid var(--border-hi);
+      border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 100;
+    }
+
+    .combobox-item {
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      color: var(--cream);
+    }
+
+    .combobox-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--gold);
+    }
+
+    .combobox-item-new {
+      color: var(--amber);
+      font-style: italic;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Face B specific ────────────────────────────────────── */
+    .back-link {
+      display: inline-block;
+      font-size: 13px;
+      color: var(--amber);
+      text-decoration: none;
+      margin-bottom: 20px;
+    }
+    .back-link:hover { color: var(--gold); }
+
+    .face-b-heading {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--cream);
+      margin-bottom: 24px;
+      line-height: 1.25;
+    }
+
+    /* ── Star rating ────────────────────────────────────────── */
+    .star-rating {
+      display: flex;
+      gap: 2px;
+      padding: 6px 0 0;
+    }
+
+    .star {
+      font-size: 26px;
+      cursor: pointer;
+      color: var(--amber);
+      line-height: 1;
+      transition: transform 0.1s;
+      user-select: none;
+    }
+
+    .star:hover { transform: scale(1.15); }
+
+    /* ── Share CTA ──────────────────────────────────────────── */
+    .share-cta {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 14px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* ── Submit success ─────────────────────────────────────── */
+    .submit-success {
+      margin-top: 20px;
+      padding: 16px 20px;
+      background: rgba(76, 175, 112, 0.1);
+      border: 1px solid rgba(76, 175, 112, 0.3);
+      border-radius: var(--radius);
+      color: #4caf70;
+      font-size: 14px;
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    .submit-success a {
+      color: #4caf70;
+      display: block;
+      margin-top: 8px;
     }
 
     /* ── How it works ───────────────────────────────────────── */
@@ -652,87 +791,203 @@
       </p>
 
       <div class="demo-card">
-        <!-- Form -->
-        <div class="form-row">
-          <div class="field">
-            <label for="origin">Coffee origin</label>
-            <select id="origin" required>
-              <option value="">Loading origins…</option>
-            </select>
+        <div class="slide-wrapper" id="slideWrapper">
+
+          <!-- ── Face A ──────────────────────────────────────── -->
+          <div class="slide-face" id="faceA">
+
+            <div class="form-row">
+              <div class="field">
+                <label for="originInputA">Coffee origin</label>
+                <div class="combobox-wrap">
+                  <input type="text" id="originInputA" placeholder="Select or type an origin…" autocomplete="off">
+                  <div id="originDropdownA" class="combobox-dropdown hidden"></div>
+                </div>
+              </div>
+              <div class="field">
+                <label for="roastA">Roast level</label>
+                <select id="roastA" required>
+                  <option value="">Select roast</option>
+                  <option value="light">Light</option>
+                  <option value="medium">Medium</option>
+                  <option value="medium-dark">Medium-Dark</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="methodA">Brewing method</label>
+              <select id="methodA" required>
+                <option value="">Loading methods…</option>
+              </select>
+            </div>
+
+            <button class="btn" id="submitBtn" onclick="getRecommendation()">
+              Get recommendation
+            </button>
+
+            <!-- Loading state -->
+            <div id="loadingState" class="loading-state hidden">
+              <div class="spinner"></div>
+              <span>Checking community brews…</span>
+            </div>
+
+            <!-- Error state -->
+            <div id="errorState" class="error-state hidden"></div>
+
+            <!-- Result card -->
+            <div id="resultCard" class="result-card hidden">
+              <div class="result-header">
+                <div>
+                  <div class="result-method" id="resMethod"></div>
+                  <div class="result-origin" id="resOrigin"></div>
+                </div>
+                <div class="confidence-badge" id="resBadge">
+                  <div class="confidence-dot"></div>
+                  <span id="resBadgeText"></span>
+                </div>
+              </div>
+
+              <!-- Brew params -->
+              <div class="params-grid">
+                <div class="param-box">
+                  <span class="param-value" id="resTemp">—</span>
+                  <span class="param-label">Temp (°C)</span>
+                </div>
+                <div class="param-box">
+                  <span class="param-value" id="resRatio">—</span>
+                  <span class="param-label">Ratio</span>
+                </div>
+                <div class="param-box">
+                  <span class="param-value" id="resGrind">—</span>
+                  <span class="param-label">Grind</span>
+                </div>
+                <div class="param-box">
+                  <span class="param-value" id="resTime">—</span>
+                  <span class="param-label">Time</span>
+                </div>
+              </div>
+
+              <!-- Technique steps -->
+              <div class="technique-section" id="techniqueSection">
+                <div class="technique-title">Technique guide</div>
+                <ol class="technique-steps" id="techniqueSteps"></ol>
+              </div>
+
+              <!-- Data points -->
+              <div class="data-points" id="resDataPoints"></div>
+
+              <!-- Share CTA -->
+              <div class="share-cta">
+                Already brewed? <a href="#" onclick="onShareClick(event)">Share your results →</a>
+              </div>
+            </div>
+
           </div>
-          <div class="field">
-            <label for="roast">Roast level</label>
-            <select id="roast" required>
-              <option value="">Select roast</option>
-              <option value="light">Light</option>
-              <option value="medium">Medium</option>
-              <option value="medium-dark">Medium-Dark</option>
-              <option value="dark">Dark</option>
-            </select>
+          <!-- /faceA -->
+
+          <!-- ── Face B ──────────────────────────────────────── -->
+          <div class="slide-face" id="faceB">
+
+            <a href="#" class="back-link" onclick="onBackClick(event)">← back to recommend</a>
+
+            <div class="face-b-heading">How did it go?</div>
+
+            <div class="form-row">
+              <div class="field">
+                <label for="originInputB">Coffee origin</label>
+                <div class="combobox-wrap">
+                  <input type="text" id="originInputB" placeholder="Select or type an origin…" autocomplete="off">
+                  <div id="originDropdownB" class="combobox-dropdown hidden"></div>
+                </div>
+              </div>
+              <div class="field">
+                <label for="roastB">Roast level</label>
+                <select id="roastB">
+                  <option value="">Select roast</option>
+                  <option value="light">Light</option>
+                  <option value="medium">Medium</option>
+                  <option value="medium-dark">Medium-Dark</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="field">
+                <label for="methodB">Brewing method</label>
+                <select id="methodB">
+                  <option value="">Loading methods…</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="grindB">Grind size</label>
+                <select id="grindB">
+                  <option value="">Select grind</option>
+                  <option value="extra-fine">Extra Fine</option>
+                  <option value="fine">Fine</option>
+                  <option value="fine-medium">Fine-Medium</option>
+                  <option value="medium-fine">Medium-Fine</option>
+                  <option value="medium">Medium</option>
+                  <option value="medium-coarse">Medium-Coarse</option>
+                  <option value="coarse">Coarse</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="field">
+                <label for="tempB">Water temp (°C)</label>
+                <input type="number" id="tempB" placeholder="e.g. 93" min="0" max="100">
+              </div>
+              <div class="field">
+                <label for="ratioB">Ratio (1:[X])</label>
+                <input type="number" id="ratioB" placeholder="e.g. 15" min="1" max="100" step="0.5">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="field">
+                <label for="timeB">Brew time (s)</label>
+                <input type="number" id="timeB" placeholder="e.g. 240" min="0">
+              </div>
+              <div class="field">
+                <label>Rating</label>
+                <div class="star-rating" id="starRating" role="group" aria-label="Rating 1 to 5 stars">
+                  <span class="star" role="button" tabindex="0" data-v="1">☆</span>
+                  <span class="star" role="button" tabindex="0" data-v="2">☆</span>
+                  <span class="star" role="button" tabindex="0" data-v="3">☆</span>
+                  <span class="star" role="button" tabindex="0" data-v="4">☆</span>
+                  <span class="star" role="button" tabindex="0" data-v="5">☆</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="notesB">Technique notes</label>
+              <textarea id="notesB" rows="4" placeholder="Describe your brew technique — bloom timing, pour stages, agitation, drawdown, taste notes…"></textarea>
+            </div>
+
+            <button class="btn" id="submitBrewBtn" onclick="submitBrew()">Submit brew</button>
+
+            <div id="submitLoadingState" class="loading-state hidden">
+              <div class="spinner"></div>
+              <span>Logging your brew…</span>
+            </div>
+
+            <div id="submitErrorState" class="error-state hidden"></div>
+
+            <div id="submitSuccessState" class="submit-success hidden">
+              ✓ Brew logged — thank you!<br>
+              <a href="#" onclick="onBackClick(event)">Get another recommendation →</a>
+            </div>
+
           </div>
+          <!-- /faceB -->
+
         </div>
-        <div class="field">
-          <label for="method">Brewing method</label>
-          <select id="method" required>
-            <option value="">Loading methods…</option>
-          </select>
-        </div>
-
-        <button class="btn" id="submitBtn" onclick="getRecommendation()">
-          Get recommendation
-        </button>
-
-        <!-- Loading state -->
-        <div id="loadingState" class="loading-state hidden">
-          <div class="spinner"></div>
-          <span>Checking community brews…</span>
-        </div>
-
-        <!-- Error state -->
-        <div id="errorState" class="error-state hidden"></div>
-
-        <!-- Result card -->
-        <div id="resultCard" class="result-card hidden">
-          <div class="result-header">
-            <div>
-              <div class="result-method" id="resMethod"></div>
-              <div class="result-origin" id="resOrigin"></div>
-            </div>
-            <div class="confidence-badge" id="resBadge">
-              <div class="confidence-dot"></div>
-              <span id="resBadgeText"></span>
-            </div>
-          </div>
-
-          <!-- Brew params -->
-          <div class="params-grid">
-            <div class="param-box">
-              <span class="param-value" id="resTemp">—</span>
-              <span class="param-label">Temp (°C)</span>
-            </div>
-            <div class="param-box">
-              <span class="param-value" id="resRatio">—</span>
-              <span class="param-label">Ratio</span>
-            </div>
-            <div class="param-box">
-              <span class="param-value" id="resGrind">—</span>
-              <span class="param-label">Grind</span>
-            </div>
-            <div class="param-box">
-              <span class="param-value" id="resTime">—</span>
-              <span class="param-label">Time</span>
-            </div>
-          </div>
-
-          <!-- Technique steps -->
-          <div class="technique-section" id="techniqueSection">
-            <div class="technique-title">Technique guide</div>
-            <ol class="technique-steps" id="techniqueSteps"></ol>
-          </div>
-
-          <!-- Data points -->
-          <div class="data-points" id="resDataPoints"></div>
-        </div>
+        <!-- /slide-wrapper -->
       </div>
     </div>
   </section>
@@ -870,6 +1125,59 @@
   <script>
     const API = 'https://brew-guide-production.up.railway.app';
 
+    // ── State ──────────────────────────────────────────────────
+    window._origins = [];
+    window._methodMap = {};
+    let _selectedRating = 0;
+
+    // ── Combobox factory ────────────────────────────────────────
+    function initCombobox(inputId, dropdownId) {
+      const input    = document.getElementById(inputId);
+      const dropdown = document.getElementById(dropdownId);
+
+      function renderDropdown(filterText) {
+        const lc = filterText.toLowerCase();
+        const filtered = filterText
+          ? window._origins.filter(o => o.name.toLowerCase().includes(lc))
+          : window._origins;
+
+        dropdown.innerHTML = '';
+
+        filtered.forEach(o => {
+          const item = document.createElement('div');
+          item.className = 'combobox-item';
+          item.textContent = o.name;
+          item.addEventListener('mousedown', e => {
+            e.preventDefault();
+            input.value = o.name;
+            dropdown.classList.add('hidden');
+          });
+          dropdown.appendChild(item);
+        });
+
+        if (filterText.length > 0 && filtered.length === 0) {
+          const newItem = document.createElement('div');
+          newItem.className = 'combobox-item combobox-item-new';
+          newItem.textContent = `Use "${filterText}" as a new origin`;
+          newItem.addEventListener('mousedown', e => {
+            e.preventDefault();
+            dropdown.classList.add('hidden');
+          });
+          dropdown.appendChild(newItem);
+        }
+
+        if (dropdown.children.length > 0) {
+          dropdown.classList.remove('hidden');
+        } else {
+          dropdown.classList.add('hidden');
+        }
+      }
+
+      input.addEventListener('focus', () => renderDropdown(input.value));
+      input.addEventListener('input', () => renderDropdown(input.value));
+      input.addEventListener('blur',  () => setTimeout(() => dropdown.classList.add('hidden'), 150));
+    }
+
     // ── Bootstrap: load origins + methods ──────────────────────
     async function bootstrap() {
       const [originsRes, methodsRes] = await Promise.allSettled([
@@ -877,73 +1185,115 @@
         fetch(`${API}/brewing-methods`)
       ]);
 
-      // Populate origins
-      const originSelect = document.getElementById('origin');
+      // Origins
       if (originsRes.status === 'fulfilled' && originsRes.value.ok) {
-        const origins = await originsRes.value.json();
-        originSelect.innerHTML = '<option value="">Select origin</option>';
-        origins.forEach(o => {
-          const opt = document.createElement('option');
-          opt.value = o.name;
-          opt.textContent = o.name;
-          originSelect.appendChild(opt);
-        });
+        window._origins = await originsRes.value.json();
       } else {
-        // Fallback static list
-        const fallback = ['Ethiopia','Colombia','Kenya','Brazil','Guatemala','Indonesia',
+        window._origins = [
+          'Ethiopia','Colombia','Kenya','Brazil','Guatemala','Indonesia',
           'Costa Rica','Honduras','Peru','Rwanda','Burundi','Panama','Jamaica',
-          'Yemen','Vietnam','India','Mexico','El Salvador','Bolivia','Tanzania'];
-        originSelect.innerHTML = '<option value="">Select origin</option>';
-        fallback.forEach(name => {
-          const opt = document.createElement('option');
-          opt.value = name; opt.textContent = name;
-          originSelect.appendChild(opt);
-        });
+          'Yemen','Vietnam','India','Mexico','El Salvador','Bolivia','Tanzania'
+        ].map(name => ({ name }));
       }
 
-      // Populate methods
-      const methodSelect = document.getElementById('method');
+      initCombobox('originInputA', 'originDropdownA');
+      initCombobox('originInputB', 'originDropdownB');
+
+      // Methods — populate both selects
       const methodMap = {};
       if (methodsRes.status === 'fulfilled' && methodsRes.value.ok) {
         const methods = await methodsRes.value.json();
-        methodSelect.innerHTML = '<option value="">Select method</option>';
-        methods.forEach(m => {
-          methodMap[m.id] = m;
-          const opt = document.createElement('option');
-          opt.value = m.id;
-          opt.textContent = m.name;
-          methodSelect.appendChild(opt);
-        });
+        populateMethodSelect('methodA', methods, 'Select method');
+        populateMethodSelect('methodB', methods, 'Select method');
+        methods.forEach(m => { methodMap[m.id] = m; });
       } else {
-        // Fallback static list
         const fallback = [
           {id:1,name:'Pour Over'},{id:2,name:'French Press'},{id:3,name:'Espresso'},
           {id:4,name:'AeroPress'},{id:5,name:'Chemex'},{id:6,name:'Moka Pot'},
           {id:7,name:'Siphon'},{id:8,name:'Cold Brew'}
         ];
-        methodSelect.innerHTML = '<option value="">Select method</option>';
-        fallback.forEach(m => {
-          methodMap[m.id] = m;
-          const opt = document.createElement('option');
-          opt.value = m.id; opt.textContent = m.name;
-          methodSelect.appendChild(opt);
-        });
+        populateMethodSelect('methodA', fallback, 'Select method');
+        populateMethodSelect('methodB', fallback, 'Select method');
+        fallback.forEach(m => { methodMap[m.id] = m; });
       }
 
       window._methodMap = methodMap;
+
+      // Init slider height after all content is in DOM
+      updateSliderHeight();
     }
+
+    function populateMethodSelect(selectId, methods, placeholder) {
+      const sel = document.getElementById(selectId);
+      sel.innerHTML = `<option value="">${placeholder}</option>`;
+      methods.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.name;
+        sel.appendChild(opt);
+      });
+    }
+
+    // ── Slider height management ────────────────────────────────
+    function updateSliderHeight() {
+      const wrapper = document.getElementById('slideWrapper');
+      const isB = wrapper.classList.contains('show-b');
+      const face = document.getElementById(isB ? 'faceB' : 'faceA');
+      wrapper.style.height = face.offsetHeight + 'px';
+    }
+
+    window.addEventListener('resize', updateSliderHeight);
+
+    // ── Slide transitions ───────────────────────────────────────
+    function onShareClick(e) {
+      e.preventDefault();
+      // Pre-fill Face B from Face A selection
+      document.getElementById('originInputB').value = document.getElementById('originInputA').value;
+      document.getElementById('roastB').value        = document.getElementById('roastA').value;
+      document.getElementById('methodB').value       = document.getElementById('methodA').value;
+
+      const wrapper = document.getElementById('slideWrapper');
+      wrapper.style.height = document.getElementById('faceB').offsetHeight + 'px';
+      wrapper.classList.add('show-b');
+    }
+
+    function onBackClick(e) {
+      e.preventDefault();
+      const wrapper = document.getElementById('slideWrapper');
+      wrapper.style.height = document.getElementById('faceA').offsetHeight + 'px';
+      wrapper.classList.remove('show-b');
+    }
+
+    // ── Star rating ─────────────────────────────────────────────
+    const _stars = document.querySelectorAll('#starRating .star');
+
+    function paintStars(n) {
+      _stars.forEach((s, i) => { s.textContent = i < n ? '★' : '☆'; });
+    }
+
+    _stars.forEach((star, idx) => {
+      star.addEventListener('click',     () => { _selectedRating = idx + 1; paintStars(_selectedRating); });
+      star.addEventListener('mouseover', () => paintStars(idx + 1));
+      star.addEventListener('mouseout',  () => paintStars(_selectedRating));
+      star.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          _selectedRating = idx + 1;
+          paintStars(_selectedRating);
+        }
+      });
+    });
 
     // ── Technique renderer ──────────────────────────────────────
     function renderTechnique(technique, methodName) {
       if (!technique) return null;
       const steps = [];
-      const mn = (methodName || '').toLowerCase();
 
       // Pour Over / Chemex (bloom + pour stages)
       if (technique.bloom_duration_s !== undefined && technique.pour_stages) {
         const bloomGrams = technique.bloom_weight_ratio ? `${technique.bloom_weight_ratio}× coffee weight` : '';
         steps.push(`Bloom: add ${bloomGrams} of water and wait ${technique.bloom_duration_s}s.`);
-        (technique.pour_stages || []).forEach((stage, i) => {
+        (technique.pour_stages || []).forEach(stage => {
           const atMin = Math.floor(stage.at_s / 60);
           const atSec = stage.at_s % 60;
           const timeStr = atMin > 0 ? `${atMin}:${String(atSec).padStart(2,'0')}` : `${atSec}s`;
@@ -1035,7 +1385,7 @@
       return steps.length > 0 ? steps : null;
     }
 
-    // ── Format brew time ────────────────────────────────────────
+    // ── Format helpers ──────────────────────────────────────────
     function formatTime(seconds) {
       if (seconds < 60) return `${seconds}s`;
       const m = Math.floor(seconds / 60);
@@ -1043,20 +1393,18 @@
       return s > 0 ? `${m}m ${s}s` : `${m}m`;
     }
 
-    // ── Format ratio ────────────────────────────────────────────
     function formatRatio(ratio) {
-      // ratio is coffee/water, e.g. 0.0625 = 1:16
+      // ratio = coffee/water, e.g. 0.0625 = 1:16
       const water = Math.round(1 / ratio);
       return `1:${water}`;
     }
 
-    // ── Main recommend handler ──────────────────────────────────
+    // ── Recommendation handler ──────────────────────────────────
     async function getRecommendation() {
-      const origin = document.getElementById('origin').value;
-      const roast  = document.getElementById('roast').value;
-      const method = document.getElementById('method').value;
+      const origin = document.getElementById('originInputA').value.trim();
+      const roast  = document.getElementById('roastA').value;
+      const method = document.getElementById('methodA').value;
 
-      // Basic validation
       if (!origin || !roast || !method) {
         showError('Please select an origin, roast level, and brewing method.');
         return;
@@ -1069,6 +1417,7 @@
       hide('errorState');
       hide('resultCard');
       show('loadingState');
+      updateSliderHeight();
 
       const start = Date.now();
 
@@ -1090,7 +1439,6 @@
 
         const data = await res.json();
         const elapsed = Date.now() - start;
-        // Minimum 400ms to feel alive
         if (elapsed < 400) await delay(400 - elapsed);
 
         renderResult(data);
@@ -1101,28 +1449,25 @@
         hide('loadingState');
         btn.disabled = false;
         btn.textContent = 'Get recommendation';
+        updateSliderHeight();
       }
     }
 
-    // ── Render the result card ──────────────────────────────────
+    // ── Render result card ──────────────────────────────────────
     function renderResult(data) {
-      const input = data.input || {};
-      const methodMap = window._methodMap || {};
+      const input      = data.input || {};
       const methodName = data.brewing_method || '';
 
-      // Header
       document.getElementById('resMethod').textContent = methodName;
       document.getElementById('resOrigin').textContent =
         `${input.origin || ''} · ${(input.roast_level || '').replace('-', '‑')} roast`;
 
-      // Confidence badge
       const badge = document.getElementById('resBadge');
-      const conf = (data.confidence || 'low').toLowerCase();
+      const conf  = (data.confidence || 'low').toLowerCase();
       badge.className = `confidence-badge ${conf}`;
       document.getElementById('resBadgeText').textContent =
         conf.charAt(0).toUpperCase() + conf.slice(1) + ' confidence';
 
-      // Params
       document.getElementById('resTemp').textContent =
         input.water_temp_c != null ? `${input.water_temp_c}°` : '—';
       document.getElementById('resRatio').textContent =
@@ -1132,9 +1477,8 @@
       document.getElementById('resTime').textContent =
         input.brew_time_s != null ? formatTime(input.brew_time_s) : '—';
 
-      // Technique steps
       const techSection = document.getElementById('techniqueSection');
-      const techList = document.getElementById('techniqueSteps');
+      const techList    = document.getElementById('techniqueSteps');
       techList.innerHTML = '';
       const steps = renderTechnique(data.technique, methodName);
       if (steps && steps.length > 0) {
@@ -1144,26 +1488,86 @@
           li.innerHTML = `<span class="step-num"></span><span class="step-text">${escHtml(s)}</span>`;
           techList.appendChild(li);
         });
-        // Number the steps via CSS counter override
         let num = 1;
-        techList.querySelectorAll('.step-num').forEach(el => {
-          el.textContent = num++;
-        });
+        techList.querySelectorAll('.step-num').forEach(el => { el.textContent = num++; });
         techSection.style.display = '';
       } else {
         techSection.style.display = 'none';
       }
 
-      // Data points
       const dp = data.data_points_used;
       document.getElementById('resDataPoints').innerHTML =
         `<strong>${dp != null ? dp : '?'}</strong> community brew${dp !== 1 ? 's' : ''} informed this recommendation.`;
 
       show('resultCard');
+      updateSliderHeight();
 
-      // Scroll result into view on mobile
       if (window.innerWidth < 600) {
         document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    // ── Submit brew (Face B) ────────────────────────────────────
+    async function submitBrew() {
+      const origin   = document.getElementById('originInputB').value.trim();
+      const roast    = document.getElementById('roastB').value;
+      const method   = document.getElementById('methodB').value;
+      const grind    = document.getElementById('grindB').value;
+      const tempRaw  = document.getElementById('tempB').value;
+      const ratioRaw = document.getElementById('ratioB').value;
+      const timeRaw  = document.getElementById('timeB').value;
+      const notes    = document.getElementById('notesB').value.trim();
+
+      if (!origin || !roast || !method) {
+        showSubmitError('Origin, roast level, and brewing method are required.');
+        return;
+      }
+
+      const btn = document.getElementById('submitBrewBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting…';
+
+      hide('submitErrorState');
+      hide('submitSuccessState');
+      show('submitLoadingState');
+      updateSliderHeight();
+
+      const body = {
+        origin,
+        roast_level: roast,
+        brewing_method_id: parseInt(method),
+        source: 'user_submitted'
+      };
+
+      if (grind)                 body.grind_size   = grind;
+      if (tempRaw)               body.water_temp_c = parseInt(tempRaw);
+      if (ratioRaw)              body.ratio        = 1 / parseFloat(ratioRaw);
+      if (timeRaw)               body.brew_time_s  = parseInt(timeRaw);
+      if (_selectedRating > 0)   body.rating       = _selectedRating;
+      if (notes)                 body.notes        = notes;
+
+      try {
+        const res = await fetch(`${API}/brews`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || err.message || `API error ${res.status}`);
+        }
+
+        hide('submitLoadingState');
+        show('submitSuccessState');
+
+      } catch (err) {
+        hide('submitLoadingState');
+        showSubmitError(err.message || 'Something went wrong. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit brew';
+        updateSliderHeight();
       }
     }
 
@@ -1181,12 +1585,23 @@
       el.textContent = msg;
       el.classList.remove('hidden');
     }
+    function showSubmitError(msg) {
+      const el = document.getElementById('submitErrorState');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
 
-    // ── Allow Enter key to submit ───────────────────────────────
-    ['origin','roast','method'].forEach(id => {
+    // ── Enter key on Face A inputs ──────────────────────────────
+    ['roastA', 'methodA'].forEach(id => {
       document.getElementById(id).addEventListener('keydown', e => {
         if (e.key === 'Enter') getRecommendation();
       });
+    });
+    document.getElementById('originInputA').addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        document.getElementById('originDropdownA').classList.add('hidden');
+        getRecommendation();
+      }
     });
 
     // ── Boot ────────────────────────────────────────────────────
