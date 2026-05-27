@@ -51,7 +51,7 @@ const brewSchema = z.object({
   brew_time_s: z.number(),
   rating: z.number().min(1).max(5),
   notes: z.string().optional(),
-  source: z.enum(['user_submitted', 'scraped:reddit', 'scraped:home-barista']).optional().default('user_submitted'),
+  source: z.enum(['user_submitted', 'scraped:reddit', 'scraped:home-barista', 'scraped:roaster']).optional().default('user_submitted'),
   source_url: z.string().url().optional(),
   field_confidence: z.string().optional(),
 });

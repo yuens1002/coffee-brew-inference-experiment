@@ -21,7 +21,7 @@ export interface Origin {
 }
 
 /** Source attribution for a brew entry */
-export type BrewSource = 'user_submitted' | 'scraped:reddit' | 'scraped:home-barista';
+export type BrewSource = 'user_submitted' | 'scraped:reddit' | 'scraped:home-barista' | 'scraped:roaster';
 
 /** Per-field extraction confidence from narrative parsing */
 export interface FieldConfidence {
