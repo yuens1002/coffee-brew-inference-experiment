@@ -26,6 +26,7 @@ model BrewingMethod {
   grind_size          String
   default_brew_time_s Int
   default_ratio       Float
+  technique           String?          // JSON: method-scoped technique schema
   brews               Brew[]
   recommendations     Recommendation[]
 
