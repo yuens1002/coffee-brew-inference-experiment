@@ -239,6 +239,7 @@ export async function computeBestBrew(
     confidence,
     sources,
     data_points_used: topN.length,
+    technique: method.technique ?? null,
   };
 }
 

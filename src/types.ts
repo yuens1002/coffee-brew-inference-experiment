@@ -90,6 +90,7 @@ export interface Recommendation {
   confidence: 'high' | 'medium' | 'low';
   sources: SourceRef[];
   data_points_used: number;
+  technique?: BrewTechnique | null;
 }
 
 /** Stored recommendation record (prediction log) */
