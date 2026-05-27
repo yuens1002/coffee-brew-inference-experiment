@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { getBrewingMethods, getBrews, getBrewById, addBrew, getOrigins } from '../lib/db.js';
+import { getBrewingMethods, getBrews, getBrewById, addBrew, getOrigins, getBrewLinks } from '../lib/db.js';
 import { computeBestBrew, tryLinkBrew, resolveOrigin } from '../lib/recommend.js';
 import type { BrewingMethod, Brew } from '../types.js';
 
@@ -103,6 +103,10 @@ app.get('/brews/:id/compare', async (c) => {
   const brew = await getBrewById(id);
   if (!brew) return c.json({ error: 'Brew not found' }, 404);
 
+  const links = await getBrewLinks(brew.id);
+  // Real match confidence from brew_recommendation_links; falls back to 0.5 if no recommendation was linked
+  const matchScore = links.length > 0 ? links[0].match_confidence : 0.5;
+
   const methods = await getBrewingMethods();
   const method = methods.find((m) => m.id === brew.brewing_method_id);
 
@@ -129,7 +133,7 @@ app.get('/brews/:id/compare', async (c) => {
     analysis: method
       ? `Your water was ${tempDelta > 0 ? `${tempDelta}°C hotter` : `${Math.abs(tempDelta)}°C cooler`} and brew time ${timeDelta > 0 ? `${timeDelta}s longer` : `${Math.abs(timeDelta)}s shorter`} than the standard ${method.name} recommendation.`
       : 'No baseline method found for comparison.',
-    match_score: 0.5, // Stub — real scoring wired in Phase 2
+    match_score: matchScore,
   });
 });
 

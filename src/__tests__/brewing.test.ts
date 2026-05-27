@@ -330,6 +330,30 @@ describe('GET /brews/:id/compare', () => {
 
     expect(res.status).toBe(404);
   });
+
+  it('returns real match_score when a recommendation link exists', async () => {
+    vi.mocked(getBrewById).mockResolvedValue(mockBrew);
+    vi.mocked(getBrewingMethods).mockResolvedValue(mockMethods);
+    vi.mocked(getBrewLinks).mockResolvedValue([{ brew_id: 1, recommendation_id: 1, match_confidence: 0.82, linked_at: '2026-05-27T00:00:00Z' }]);
+
+    const res = await brewingRoutes.request('/brews/1/compare');
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.match_score).toBe(0.82);
+  });
+
+  it('falls back to 0.5 match_score when no recommendation link exists', async () => {
+    vi.mocked(getBrewById).mockResolvedValue(mockBrew);
+    vi.mocked(getBrewingMethods).mockResolvedValue(mockMethods);
+    vi.mocked(getBrewLinks).mockResolvedValue([]);
+
+    const res = await brewingRoutes.request('/brews/1/compare');
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.match_score).toBe(0.5);
+  });
 });
 
 describe('POST /recommend', () => {
