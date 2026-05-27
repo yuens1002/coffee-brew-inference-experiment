@@ -1,382 +1,1196 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>☕ Coffee Brew Inference Experiment</title>
-    <style>
-        * { margin:0; padding:0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5e6d3; color: #3e2723; min-height: 100vh; padding: 20px; }
-        .container { max-width: 900px; margin:0 auto; }
-        h1 { text-align: center; color: #5d4037; margin-bottom: 10px; font-size: 2.2em; }
-        .subtitle { text-align: center; color: #8d6e63; margin-bottom: 30px; font-size: 1.1em; }
-        
-        .tabs { display: flex; gap: 2px; margin-bottom: 20px; background: #d7ccc8; border-radius: 8px; padding: 4px; }
-        .tab { flex: 1; padding: 12px 20px; text-align: center; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
-        .tab.active { background: #5d4037; color: white; }
-        .tab:not(.active):hover { background: #bcaaa4; }
-        
-        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .card h2 { margin-bottom: 16px; color: #5d4037; }
-        
-        label { display: block; margin-bottom: 6px; font-weight: 600; color: #5d4037; }
-        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 16px; border: 2px solid #d7ccc8; border-radius: 6px; font-size: 14px; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #8d6e63; }
-        
-        button { background: #6d4c41; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; cursor: pointer; width: 100%; font-weight: 600; transition: background 0.3s; }
-        button:hover { background: #5d4037; }
-        button:disabled { background: #bcaaa4; cursor: not-allowed; }
-        
-        .result { background: #efebe9; border-left: 4px solid #8d6e63; padding: 16px; margin-top: 20px; border-radius: 6px; }
-        .result h3 { margin-bottom: 10px; color: #5d4037; }
-        .loading { text-align: center; color: #8d6e63; }
-        .error { background: #ffcdd2; border-left-color: #c62828; }
-        
-        .badge { display: inline-block; background: #d7ccc8; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-right: 8px; margin-bottom: 8px; }
-        .info-box { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 12px; margin-bottom: 16px; font-size: 14px; line-height: 1.6; }
-        
-        .method-info { background: #fff3e0; border-left: 4px solid #ff9800; padding: 12px; margin-bottom: 16px; font-size: 14px; }
-        .method-info strong { color: #e65100; }
-        
-        .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-        .compare-box { background: #f5f5f5; padding: 12px; border-radius: 6px; }
-        .compare-box h4 { margin-bottom: 8px; color: #5d4037; }
-        
-        #journey2 { display: none; }
-        
-        .success { background: #c8e6c9; border-left-color: #2e7d32; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brew Guide — Community-Powered Coffee Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #1a1008;
+      --bg-card:   #221508;
+      --bg-input:  #2c1e0f;
+      --border:    #3d2a14;
+      --border-hi: #6b3f18;
+      --amber:     #c8860a;
+      --gold:      #f5a623;
+      --cream:     #f0e6d3;
+      --muted:     #9e8a72;
+      --success:   #4caf70;
+      --error:     #e05252;
+      --radius:    10px;
+      --radius-lg: 16px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--cream);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ─────────────────────────────────────────────── */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* ── Hero ───────────────────────────────────────────────── */
+    .hero {
+      padding: 80px 20px 60px;
+      text-align: center;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, #3a200a 0%, var(--bg) 70%);
+    }
+
+    .hero-eyebrow {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--cream);
+      margin-bottom: 24px;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--gold);
+    }
+
+    .hero-desc {
+      max-width: 560px;
+      margin: 0 auto 40px;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.7;
+    }
+
+    .hero-desc strong {
+      color: var(--cream);
+    }
+
+    /* ── Section headings ───────────────────────────────────── */
+    section {
+      padding: 60px 20px;
+    }
+
+    .section-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1.5rem, 3.5vw, 2rem);
+      font-weight: 700;
+      color: var(--cream);
+      margin-bottom: 16px;
+    }
+
+    /* ── Demo widget ────────────────────────────────────────── */
+    #demo {
+      background: linear-gradient(180deg, #221508 0%, var(--bg) 100%);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .demo-inner {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .demo-intro {
+      color: var(--muted);
+      margin-bottom: 32px;
+      font-size: 0.95rem;
+    }
+
+    .demo-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 480px) {
+      .form-row { grid-template-columns: 1fr; }
+      .demo-card { padding: 20px 16px; }
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 8px;
+      letter-spacing: 0.03em;
+    }
+
+    select, input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--cream);
+      font-family: inherit;
+      font-size: 15px;
+      padding: 11px 14px;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: border-color 0.2s;
+      cursor: pointer;
+    }
+
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%239e8a72' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--amber);
+    }
+
+    select option {
+      background: #2c1e0f;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px 24px;
+      background: var(--amber);
+      color: #110900;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: var(--gold);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    /* ── Loading ────────────────────────────────────────────── */
+    .loading-state {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 24px 0 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--amber);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── Result card ────────────────────────────────────────── */
+    .result-card {
+      margin-top: 28px;
+      border-top: 1px solid var(--border);
+      padding-top: 28px;
+    }
+
+    .result-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .result-method {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.25rem;
+      color: var(--cream);
+      line-height: 1.3;
+    }
+
+    .result-origin {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .confidence-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .confidence-badge.high   { background: rgba(76, 175, 112, 0.15); color: #4caf70; border: 1px solid rgba(76, 175, 112, 0.3); }
+    .confidence-badge.medium { background: rgba(200, 134, 10, 0.15); color: var(--gold); border: 1px solid rgba(200, 134, 10, 0.35); }
+    .confidence-badge.low    { background: rgba(224, 82, 82, 0.12); color: #e07070; border: 1px solid rgba(224, 82, 82, 0.3); }
+
+    .confidence-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* ── Params grid ────────────────────────────────────────── */
+    .params-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    @media (min-width: 480px) {
+      .params-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    .param-box {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 12px;
+      text-align: center;
+    }
+
+    .param-value {
+      display: block;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+
+    .param-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    /* ── Technique steps ────────────────────────────────────── */
+    .technique-section {
+      margin-bottom: 20px;
+    }
+
+    .technique-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 14px;
+    }
+
+    .technique-steps {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .step-num {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      background: var(--amber);
+      color: #110900;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+
+    .step-text {
+      font-size: 14px;
+      color: var(--cream);
+      line-height: 1.5;
+    }
+
+    /* ── Data points ────────────────────────────────────────── */
+    .data-points {
+      font-size: 13px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+      margin-top: 16px;
+    }
+
+    .data-points strong {
+      color: var(--amber);
+    }
+
+    /* ── Error state ────────────────────────────────────────── */
+    .error-state {
+      margin-top: 20px;
+      padding: 16px;
+      background: rgba(224, 82, 82, 0.08);
+      border: 1px solid rgba(224, 82, 82, 0.25);
+      border-radius: var(--radius);
+      color: #e07070;
+      font-size: 14px;
+    }
+
+    /* ── How it works ───────────────────────────────────────── */
+    #how-it-works {
+      border-top: 1px solid var(--border);
+    }
+
+    .steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      max-width: 640px;
+      margin-top: 32px;
+      counter-reset: step-counter;
+    }
+
+    .how-step {
+      display: flex;
+      gap: 20px;
+      padding-bottom: 32px;
+      position: relative;
+    }
+
+    .how-step::before {
+      content: counter(step-counter);
+      counter-increment: step-counter;
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      background: var(--amber);
+      color: #110900;
+      font-weight: 700;
+      font-size: 14px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .how-step::after {
+      content: '';
+      position: absolute;
+      left: 16px;
+      top: 32px;
+      bottom: 0;
+      width: 1px;
+      background: var(--border);
+    }
+
+    .how-step:last-child::after { display: none; }
+
+    .how-step-content h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--cream);
+      margin-bottom: 6px;
+    }
+
+    .how-step-content p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── Connect section ────────────────────────────────────── */
+    #connect {
+      border-top: 1px solid var(--border);
+    }
+
+    .connect-desc {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 32px;
+      max-width: 560px;
+    }
+
+    .connect-cards {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    @media (min-width: 600px) {
+      .connect-cards { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .connect-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px 20px;
+      transition: border-color 0.2s;
+    }
+
+    .connect-card:hover {
+      border-color: var(--border-hi);
+    }
+
+    .connect-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--cream);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .connect-card p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 14px;
+      line-height: 1.55;
+    }
+
+    .code-block {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 12px;
+      color: var(--gold);
+      overflow-x: auto;
+      white-space: nowrap;
+      line-height: 1.5;
+    }
+
+    /* ── What's coming ──────────────────────────────────────── */
+    #whats-coming {
+      border-top: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--bg) 0%, #221508 100%);
+    }
+
+    .coming-items {
+      display: grid;
+      gap: 20px;
+      margin-top: 32px;
+      max-width: 640px;
+    }
+
+    @media (min-width: 600px) {
+      .coming-items { grid-template-columns: 1fr 1fr; }
+    }
+
+    .coming-item {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .coming-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+      line-height: 1;
+      margin-top: 2px;
+    }
+
+    .coming-item h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--cream);
+      margin-bottom: 5px;
+    }
+
+    .coming-item p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ── Footer ─────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .footer-left {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .footer-left a {
+      color: var(--amber);
+      text-decoration: none;
+    }
+
+    .footer-left a:hover {
+      color: var(--gold);
+    }
+
+    .footer-right {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .footer-right a {
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .footer-right a:hover {
+      color: var(--cream);
+    }
+
+    /* ── Utility ────────────────────────────────────────────── */
+    .hidden { display: none !important; }
+
+    a { color: var(--amber); }
+    a:hover { color: var(--gold); }
+  </style>
 </head>
 <body>
+
+  <!-- ── Hero ─────────────────────────────────────────────── -->
+  <header class="hero">
     <div class="container">
-        <h1>☕ Coffee Brew Inference Experiment</h1>
-        <p class="subtitle">TypeScript-anchored • Powered by Hermes Agent + DSPy • Open Knowledge Base</p>
-
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab(1)">💡 How Should I Brew?</div>
-            <div class="tab" onclick="switchTab(2)">📝 Log My Brew Experience</div>
-        </div>
-
-        <!-- Journey1: "How?" -->
-        <div id="journey1">
-            <div class="card">
-                <h2>💡 How Should I Brew This?</h2>
-                <p style="margin-bottom: 16px; color: #666;">Get AI-powered brew recommendation based on coffee knowledge + your parameters.</p>
-                
-                <div id="methodInfo1" class="method-info" style="display:none;"></div>
-
-                <form id="howForm">
-                    <label for="brewingMethod1">Brewing Method</label>
-                    <select id="brewingMethod1" name="brewingMethod" required onchange="updateMethodInfo(1)">
-                        <option value="">Select method...</option>
-                    </select>
-
-                    <label for="origin1">Coffee Origin</label>
-                    <input type="text" id="origin1" name="origin" placeholder="e.g., Colombia, Ethiopia" required>
-
-                    <label for="roastLevel1">Roast Level</label>
-                    <select id="roastLevel1" name="roastLevel" required>
-                        <option value="">Select roast...</option>
-                        <option value="light">Light</option>
-                        <option value="medium-light">Medium-Light</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="medium-dark">Medium-Dark</option>
-                        <option value="dark">Dark</option>
-                    </select>
-
-                    <label for="grindSize1">Grind Size</label>
-                    <select id="grindSize1" name="grindSize" required>
-                        <option value="">Select grind...</option>
-                        <option value="extra-coarse">Extra Coarse</option>
-                        <option value="coarse">Coarse</option>
-                        <option value="medium-coarse">Medium-Coarse</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="medium-fine">Medium-Fine</option>
-                        <option value="fine">Fine</option>
-                        <option value="extra-fine">Extra Fine</option>
-                    </select>
-
-                    <label for="waterTemp1">Water Temperature (°C) <span style="font-weight:normal; color:#888;">(80-100)</span></label>
-                    <input type="number" id="waterTemp1" name="waterTemp" min="80" max="100" value="93" required>
-
-                    <label for="ratio1">Ratio (coffee:water, e.g., 0.0625 = 1:16)</label>
-                    <input type="number" id="ratio1" name="ratio" min="0.04" max="0.15" step="0.0001" value="0.0625" required>
-
-                    <label for="brewTime1">Brew Time (seconds)</label>
-                    <input type="number" id="brewTime1" name="brewTime" min="20" max="86400" value="210" required>
-
-                    <button type="submit" id="submitBtn1">🤖 Get AI Recommendation</button>
-                </form>
-
-                <div id="result1" style="display:none;"></div>
-            </div>
-        </div>
-
-        <!-- Journey2: "Real Experience" -->
-        <div id="journey2">
-            <div class="card">
-                <h2>📝 Log My Brew Experience</h2>
-                <p style="margin-bottom: 16px; color: #666;">Brewed coffee in real life? Log it here and compare with AI recommendations.</p>
-                
-                <div class="info-box">
-                    <strong>💡 Tip:</strong> After logging, you'll be able to compare your brew against what the AI would have recommended!
-                </div>
-
-                <div id="methodInfo2" class="method-info" style="display:none;"></div>
-
-                <form id="experienceForm">
-                    <label for="brewingMethod2">Brewing Method</label>
-                    <select id="brewingMethod2" name="brewingMethod" required onchange="updateMethodInfo(2)">
-                        <option value="">Select method...</option>
-                    </select>
-
-                    <label for="origin2">Coffee Origin</label>
-                    <input type="text" id="origin2" name="origin" placeholder="e.g., Colombia, Ethiopia" required>
-
-                    <label for="roastLevel2">Roast Level</label>
-                    <select id="roastLevel2" name="roastLevel" required>
-                        <option value="">Select roast...</option>
-                        <option value="light">Light</option>
-                        <option value="medium-light">Medium-Light</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="medium-dark">Medium-Dark</option>
-                        <option value="dark">Dark</option>
-                    </select>
-
-                    <label for="grindSize2">Grind Size Used</label>
-                    <select id="grindSize2" name="grindSize" required>
-                        <option value="">Select grind...</option>
-                        <option value="extra-coarse">Extra Coarse</option>
-                        <option value="coarse">Coarse</option>
-                        <option value="medium-coarse">Medium-Coarse</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="medium-fine">Medium-Fine</option>
-                        <option value="fine">Fine</option>
-                        <option value="extra-fine">Extra Fine</option>
-                    </select>
-
-                    <label for="waterTemp2">Water Temperature Used (°C)</label>
-                    <input type="number" id="waterTemp2" name="waterTemp" min="80" max="100" value="93" required>
-
-                    <label for="ratio2">Ratio Used (coffee:water)</label>
-                    <input type="number" id="ratio2" name="ratio" min="0.04" max="0.15" step="0.0001" value="0.0625" required>
-
-                    <label for="brewTime2">Brew Time Used (seconds)</label>
-                    <input type="number" id="brewTime2" name="brewTime" min="20" max="86400" value="210" required>
-
-                    <label for="rating2">Your Rating (1-5)</label>
-                    <input type="number" id="rating2" name="rating" min="1" max="5" step="0.1" value="4.0" required>
-
-                    <label for="notes2">Notes (optional)</label>
-                    <textarea id="notes2" name="notes" rows="3" placeholder="How did it taste? What went well?"></textarea>
-
-                    <button type="submit" id="submitBtn2">📝 Log My Brew</button>
-                </form>
-
-                <div id="result2" style="display:none;"></div>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>🤖 How It Works</h2>
-            <p><span class="badge">Hermes Agent</span> Coordinated the entire build via subagents</p>
-            <p><span class="badge">TypeScript API</span> Backend with SQLite (better-sqlite3)</p>
-            <p><span class="badge">DSPy</span> Python inference pipeline for brew recommendations</p>
-            <p><span class="badge">Open Knowledge</span> Brewing parameters scraped from reputable sources</p>
-            <p><span class="badge">DEV Challenge</span> Entry for Hermes Agent Challenge 2026</p>
-        </div>
+      <span class="hero-eyebrow">☕ Community-Powered Brew Intelligence</span>
+      <h1>Every great cup starts with<br><em>the right question.</em></h1>
+      <p class="hero-desc">
+        Brew Guide turns your grinder, kettle, and bag of beans into a question
+        any AI can answer. <strong>Community consensus over thousands of real brews</strong> —
+        not generic averages. Ask how to brew your Ethiopian light roast.
+        Get specifics: bloom time, pour stages, temperature, ratio.
+      </p>
+      <a href="#demo" class="btn" style="display:inline-block;width:auto;padding:13px 32px;text-decoration:none;">
+        Try the live demo →
+      </a>
     </div>
+  </header>
 
-    <script>
-        let brewingMethods = [];
+  <!-- ── Live demo widget ──────────────────────────────────── -->
+  <section id="demo">
+    <div class="demo-inner">
+      <span class="section-label">Live demo — no login required</span>
+      <h2>How should I brew this?</h2>
+      <p class="demo-intro">
+        Pick your coffee and method. We'll pull real community brew data and
+        surface the parameters that actually work — including step-by-step technique.
+      </p>
 
-        // Load brewing methods
-        async function loadBrewingMethods() {
-            try {
-                const res = await fetch('/brewing-methods');
-                brewingMethods = await res.json();
-                
-                ['brewingMethod1', 'brewingMethod2'].forEach(id => {
-                    const select = document.getElementById(id);
-                    brewingMethods.forEach(m => {
-                        const opt = document.createElement('option');
-                        opt.value = m.id;
-                        opt.textContent = m.name;
-                        opt.dataset = m;
-                        select.appendChild(opt);
-                    });
-                });
-            } catch (err) {
-                console.error('Failed to load brewing methods:', err);
-            }
+      <div class="demo-card">
+        <!-- Form -->
+        <div class="form-row">
+          <div class="field">
+            <label for="origin">Coffee origin</label>
+            <select id="origin" required>
+              <option value="">Loading origins…</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="roast">Roast level</label>
+            <select id="roast" required>
+              <option value="">Select roast</option>
+              <option value="light">Light</option>
+              <option value="medium">Medium</option>
+              <option value="medium-dark">Medium-Dark</option>
+              <option value="dark">Dark</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="method">Brewing method</label>
+          <select id="method" required>
+            <option value="">Loading methods…</option>
+          </select>
+        </div>
+
+        <button class="btn" id="submitBtn" onclick="getRecommendation()">
+          Get recommendation
+        </button>
+
+        <!-- Loading state -->
+        <div id="loadingState" class="loading-state hidden">
+          <div class="spinner"></div>
+          <span>Checking community brews…</span>
+        </div>
+
+        <!-- Error state -->
+        <div id="errorState" class="error-state hidden"></div>
+
+        <!-- Result card -->
+        <div id="resultCard" class="result-card hidden">
+          <div class="result-header">
+            <div>
+              <div class="result-method" id="resMethod"></div>
+              <div class="result-origin" id="resOrigin"></div>
+            </div>
+            <div class="confidence-badge" id="resBadge">
+              <div class="confidence-dot"></div>
+              <span id="resBadgeText"></span>
+            </div>
+          </div>
+
+          <!-- Brew params -->
+          <div class="params-grid">
+            <div class="param-box">
+              <span class="param-value" id="resTemp">—</span>
+              <span class="param-label">Temp (°C)</span>
+            </div>
+            <div class="param-box">
+              <span class="param-value" id="resRatio">—</span>
+              <span class="param-label">Ratio</span>
+            </div>
+            <div class="param-box">
+              <span class="param-value" id="resGrind">—</span>
+              <span class="param-label">Grind</span>
+            </div>
+            <div class="param-box">
+              <span class="param-value" id="resTime">—</span>
+              <span class="param-label">Time</span>
+            </div>
+          </div>
+
+          <!-- Technique steps -->
+          <div class="technique-section" id="techniqueSection">
+            <div class="technique-title">Technique guide</div>
+            <ol class="technique-steps" id="techniqueSteps"></ol>
+          </div>
+
+          <!-- Data points -->
+          <div class="data-points" id="resDataPoints"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── How it works ──────────────────────────────────────── -->
+  <section id="how-it-works">
+    <div class="container">
+      <span class="section-label">Under the hood</span>
+      <h2>Community consensus, not machine guessing</h2>
+
+      <div class="steps-list">
+        <div class="how-step">
+          <div class="how-step-content">
+            <h3>Real people log real brews</h3>
+            <p>Every logged brew — origin, method, grind, temp, ratio, and a rating — goes into
+               the community knowledge base. Roaster guides and specialty coffee sources seed the baseline.</p>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-content">
+            <h3>Consensus over averages</h3>
+            <p>When you ask for a recommendation, Brew Guide computes a weighted consensus
+               across matching brews — favouring higher-rated, field-confident entries.
+               Confidence tiers (high / medium / low) tell you how much data exists.</p>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-content">
+            <h3>Technique from the method</h3>
+            <p>Every brewing method ships with method-scoped technique data: bloom timing, pour stages,
+               preinfusion, steep parameters. The AI surfaces what's relevant to your cup.</p>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-content">
+            <h3>Any AI can ask</h3>
+            <p>Everything is exposed over the Model Context Protocol. Claude, Cursor, Hermes — any
+               MCP-capable agent can query Brew Guide mid-conversation, no config beyond one URL.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Connect ───────────────────────────────────────────── -->
+  <section id="connect">
+    <div class="container">
+      <span class="section-label">Connect your AI assistant</span>
+      <h2>One line. Any AI. Every brew question answered.</h2>
+      <p class="connect-desc">
+        Brew Guide exposes a public MCP endpoint — no auth required.
+        Connect it once and any agent you use can answer brew questions
+        from your community's real experience.
+      </p>
+
+      <div class="connect-cards">
+        <div class="connect-card">
+          <h3>🤖 Hermes Agent</h3>
+          <p>Add to your local Hermes instance and brew questions work in every conversation.</p>
+          <div class="code-block">hermes mcp add brew_guide \<br>&nbsp;&nbsp;--url https://brew-guide-production<br>&nbsp;&nbsp;.up.railway.app/mcp</div>
+        </div>
+
+        <div class="connect-card">
+          <h3>💬 Claude.ai</h3>
+          <p>Settings → Integrations → Add MCP Server URL. Paste the endpoint and save.</p>
+          <div class="code-block">https://brew-guide-production<br>.up.railway.app/mcp</div>
+        </div>
+
+        <div class="connect-card">
+          <h3>🖥️ Claude Desktop</h3>
+          <p>Add to <code style="font-size:11px;color:var(--gold)">claude_desktop_config.json</code> under <code style="font-size:11px;color:var(--gold)">mcpServers</code>.</p>
+          <div class="code-block">"brew-guide": {<br>&nbsp;&nbsp;"type": "http",<br>&nbsp;&nbsp;"url": "https://brew-guide-<br>&nbsp;&nbsp;production.up.railway.app/mcp"<br>}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── What's coming ─────────────────────────────────────── -->
+  <section id="whats-coming">
+    <div class="container">
+      <span class="section-label">On the horizon</span>
+      <h2>The community brain keeps growing</h2>
+
+      <div class="coming-items">
+        <div class="coming-item">
+          <span class="coming-icon">🌱</span>
+          <div>
+            <h3>Narrative extraction</h3>
+            <p>LLM-powered parsing of roaster blog posts and forum threads into structured brew data — turning the internet's collective wisdom into searchable parameters.</p>
+          </div>
+        </div>
+        <div class="coming-item">
+          <span class="coming-icon">🎯</span>
+          <div>
+            <h3>Semantic origin matching</h3>
+            <p>Fuzzy similarity search so "Yirgacheffe natural process" finds what "Ethiopian light" knows — and builds richer regional taste profiles over time.</p>
+          </div>
+        </div>
+        <div class="coming-item">
+          <span class="coming-icon">📖</span>
+          <div>
+            <h3>Opt-in brew narratives</h3>
+            <p>Tasting note synthesis — the community's collective language around a cup, not just the numbers. "Tastes like blueberry jam on a Tuesday morning" as a data point.</p>
+          </div>
+        </div>
+        <div class="coming-item">
+          <span class="coming-icon">📡</span>
+          <div>
+            <h3>Reddit & forum pipeline</h3>
+            <p>r/Coffee, Home-Barista, and specialty forums as a live feed of community brew experiments — continuously updating the consensus as techniques evolve.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ─────────────────────────────────────────────── -->
+  <footer>
+    <div class="container" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;width:100%;">
+      <div class="footer-left">
+        Powered by <strong>Brew Guide MCP</strong> —
+        connect at <a href="https://brew-guide-production.up.railway.app/mcp">brew-guide-production.up.railway.app/mcp</a>
+      </div>
+      <div class="footer-right">
+        <a href="https://github.com/yuens1002/coffee-brew-inference-experiment" target="_blank" rel="noopener">
+          GitHub ↗
+        </a>
+        &nbsp;·&nbsp;
+        DEV Hermes Agent Challenge 2026
+      </div>
+    </div>
+  </footer>
+
+  <!-- ── JavaScript ─────────────────────────────────────────── -->
+  <script>
+    const API = 'https://brew-guide-production.up.railway.app';
+
+    // ── Bootstrap: load origins + methods ──────────────────────
+    async function bootstrap() {
+      const [originsRes, methodsRes] = await Promise.allSettled([
+        fetch(`${API}/origins`),
+        fetch(`${API}/brewing-methods`)
+      ]);
+
+      // Populate origins
+      const originSelect = document.getElementById('origin');
+      if (originsRes.status === 'fulfilled' && originsRes.value.ok) {
+        const origins = await originsRes.value.json();
+        originSelect.innerHTML = '<option value="">Select origin</option>';
+        origins.forEach(o => {
+          const opt = document.createElement('option');
+          opt.value = o.name;
+          opt.textContent = o.name;
+          originSelect.appendChild(opt);
+        });
+      } else {
+        // Fallback static list
+        const fallback = ['Ethiopia','Colombia','Kenya','Brazil','Guatemala','Indonesia',
+          'Costa Rica','Honduras','Peru','Rwanda','Burundi','Panama','Jamaica',
+          'Yemen','Vietnam','India','Mexico','El Salvador','Bolivia','Tanzania'];
+        originSelect.innerHTML = '<option value="">Select origin</option>';
+        fallback.forEach(name => {
+          const opt = document.createElement('option');
+          opt.value = name; opt.textContent = name;
+          originSelect.appendChild(opt);
+        });
+      }
+
+      // Populate methods
+      const methodSelect = document.getElementById('method');
+      const methodMap = {};
+      if (methodsRes.status === 'fulfilled' && methodsRes.value.ok) {
+        const methods = await methodsRes.value.json();
+        methodSelect.innerHTML = '<option value="">Select method</option>';
+        methods.forEach(m => {
+          methodMap[m.id] = m;
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = m.name;
+          methodSelect.appendChild(opt);
+        });
+      } else {
+        // Fallback static list
+        const fallback = [
+          {id:1,name:'Pour Over'},{id:2,name:'French Press'},{id:3,name:'Espresso'},
+          {id:4,name:'AeroPress'},{id:5,name:'Chemex'},{id:6,name:'Moka Pot'},
+          {id:7,name:'Siphon'},{id:8,name:'Cold Brew'}
+        ];
+        methodSelect.innerHTML = '<option value="">Select method</option>';
+        fallback.forEach(m => {
+          methodMap[m.id] = m;
+          const opt = document.createElement('option');
+          opt.value = m.id; opt.textContent = m.name;
+          methodSelect.appendChild(opt);
+        });
+      }
+
+      window._methodMap = methodMap;
+    }
+
+    // ── Technique renderer ──────────────────────────────────────
+    function renderTechnique(technique, methodName) {
+      if (!technique) return null;
+      const steps = [];
+      const mn = (methodName || '').toLowerCase();
+
+      // Pour Over / Chemex (bloom + pour stages)
+      if (technique.bloom_duration_s !== undefined && technique.pour_stages) {
+        const bloomGrams = technique.bloom_weight_ratio ? `${technique.bloom_weight_ratio}× coffee weight` : '';
+        steps.push(`Bloom: add ${bloomGrams} of water and wait ${technique.bloom_duration_s}s.`);
+        (technique.pour_stages || []).forEach((stage, i) => {
+          const atMin = Math.floor(stage.at_s / 60);
+          const atSec = stage.at_s % 60;
+          const timeStr = atMin > 0 ? `${atMin}:${String(atSec).padStart(2,'0')}` : `${atSec}s`;
+          const noteStr = stage.note ? ` (${stage.note})` : '';
+          steps.push(`At ${timeStr}: pour ${stage.volume_ml}ml${noteStr}.`);
+        });
+        if (technique.agitation) {
+          steps.push(`Agitation: ${technique.agitation} after each pour.`);
         }
-
-        // Update method info display
-        function updateMethodInfo(journeyNum) {
-            const select = document.getElementById(`brewingMethod${journeyNum}`);
-            const info = document.getElementById(`methodInfo${journeyNum}`);
-            const selected = select.options[select.selectedIndex];
-            
-            if (selected.value) {
-                const method = brewingMethods.find(m => m.id == selected.value);
-                if (method) {
-                    info.innerHTML = `<strong>${method.name}</strong><br/>Default: ${method.default_temp_c}°C, ${(method.default_brew_time_s / 60).toFixed(1)} min, ${method.grind_size} grind, 1:${(1/method.default_ratio).toFixed(0)} ratio<br/><em>${method.description}</em>`;
-                    info.style.display = 'block';
-                }
-            } else {
-                info.style.display = 'none';
-            }
+        if (technique.drawdown_target_s) {
+          const dm = Math.floor(technique.drawdown_target_s / 60);
+          const ds = technique.drawdown_target_s % 60;
+          steps.push(`Target drawdown by ${dm}:${String(ds).padStart(2,'0')}.`);
         }
-
-        // Switch between journeys
-        function switchTab(journeyNum) {
-            document.querySelectorAll('.tab').forEach((tab, idx) => {
-                tab.classList.toggle('active', idx === journeyNum - 1);
-            });
-            document.getElementById('journey1').style.display = journeyNum === 1 ? 'block' : 'none';
-            document.getElementById('journey2').style.display = journeyNum === 2 ? 'block' : 'none';
+        if (technique.filter_rinse) {
+          steps.unshift('Rinse the filter with hot water before adding coffee.');
         }
+      }
+      // Espresso
+      else if (technique.yield_ratio !== undefined && technique.shot_time_s !== undefined) {
+        if (technique.preinfusion_s) {
+          steps.push(`Pre-infusion: ${technique.preinfusion_s}s at low pressure.`);
+        }
+        if (technique.pressure_bar) {
+          steps.push(`Pull shot at ${technique.pressure_bar} bar.`);
+        }
+        steps.push(`Target shot time: ${technique.shot_time_s}s.`);
+        steps.push(`Yield ratio: 1:${technique.yield_ratio} (coffee in to espresso out by weight).`);
+        if (technique.filter_type) {
+          steps.push(`Use a ${technique.filter_type} filter basket.`);
+        }
+      }
+      // French Press
+      else if (technique.steep_time_s !== undefined && technique.plunge_speed !== undefined) {
+        if (technique.pre_wet) {
+          steps.push('Pre-wet the grounds with a small amount of water and wait 30s.');
+        }
+        steps.push(`Add the rest of the water and steep for ${technique.steep_time_s / 60} minutes.`);
+        if (technique.stir_at_s) {
+          steps.push(`Stir at ${technique.stir_at_s / 60} min to break the crust.`);
+        }
+        steps.push(`Plunge ${technique.plunge_speed}ly. Pour immediately to avoid over-extraction.`);
+      }
+      // AeroPress
+      else if (technique.inverted !== undefined && technique.steep_time_s !== undefined) {
+        steps.push(`Use ${technique.inverted ? 'inverted' : 'standard'} AeroPress position.`);
+        steps.push(`Add coffee and water. Steep for ${technique.steep_time_s}s.`);
+        if (technique.stir_count) {
+          steps.push(`Stir ${technique.stir_count} times.`);
+        }
+        if (technique.filter_type) {
+          steps.push(`Use a ${technique.filter_type} filter for a ${technique.filter_type === 'metal' ? 'fuller body' : 'cleaner cup'}.`);
+        }
+        steps.push(`Press slowly — aim for ~30s press time.`);
+      }
+      // Cold Brew
+      else if (technique.steep_time_h !== undefined) {
+        steps.push(`Combine coarse-ground coffee and cold water at the recommended ratio.`);
+        steps.push(`Steep for ${technique.steep_time_h} hours${technique.steep_temp === 'fridge' ? ' in the refrigerator' : ' at room temperature'}.`);
+        if (technique.dilution_ratio) {
+          steps.push(`Dilute concentrate 1:${technique.dilution_ratio} before serving.`);
+        }
+      }
+      // Moka Pot
+      else if (technique.preheat_water !== undefined && technique.heat_level !== undefined) {
+        if (technique.preheat_water) {
+          steps.push('Pre-heat water in a kettle before filling the boiler — keeps extraction controlled.');
+        }
+        steps.push(`Use ${technique.heat_level} heat to avoid burning the coffee.`);
+        if (technique.tamp) {
+          steps.push(`Tamp: ${technique.tamp} — don't compress, just level the bed.`);
+        }
+        steps.push('Remove from heat as soon as you hear gurgling. Don\'t let it sputter.');
+      }
+      // Siphon
+      else if (technique.heat_source !== undefined || technique.stir_pattern !== undefined) {
+        if (technique.heat_source) {
+          steps.push(`Use a ${technique.heat_source} heat source for stable temperature.`);
+        }
+        steps.push('Add coffee to upper chamber once water rises. Stir to ensure even saturation.');
+        if (technique.stir_pattern) {
+          steps.push(`Stir in a ${technique.stir_pattern} pattern during the steep.`);
+        }
+        if (technique.drawdown_time_s) {
+          steps.push(`Remove heat — coffee draws down through the filter in ~${technique.drawdown_time_s}s.`);
+        }
+      }
 
-        // Journey1: Get recommendation
-        document.getElementById('howForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn1');
-            const result = document.getElementById('result1');
-            btn.disabled = true;
-            btn.textContent = '🤖 Getting AI recommendation...';
-            result.style.display = 'none';
+      return steps.length > 0 ? steps : null;
+    }
 
-            const methodId = parseInt(document.getElementById('brewingMethod1').value);
-            const method = brewingMethods.find(m => m.id === methodId);
+    // ── Format brew time ────────────────────────────────────────
+    function formatTime(seconds) {
+      if (seconds < 60) return `${seconds}s`;
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return s > 0 ? `${m}m ${s}s` : `${m}m`;
+    }
 
-            const formData = {
-                brewing_method_id: methodId,
-                origin: document.getElementById('origin1').value,
-                roast_level: document.getElementById('roastLevel1').value,
-                grind_size: document.getElementById('grindSize1').value,
-                water_temp_c: parseInt(document.getElementById('waterTemp1').value),
-                ratio: parseFloat(document.getElementById('ratio1').value),
-                brew_time_s: parseInt(document.getElementById('brewTime1').value)
-            };
+    // ── Format ratio ────────────────────────────────────────────
+    function formatRatio(ratio) {
+      // ratio is coffee/water, e.g. 0.0625 = 1:16
+      const water = Math.round(1 / ratio);
+      return `1:${water}`;
+    }
 
-            try {
-                const res = await fetch('/recommend', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                });
-                const data = await res.json();
+    // ── Main recommend handler ──────────────────────────────────
+    async function getRecommendation() {
+      const origin = document.getElementById('origin').value;
+      const roast  = document.getElementById('roast').value;
+      const method = document.getElementById('method').value;
 
-                result.className = 'result';
-                result.innerHTML = `
-                    <h3>☕ AI Recommendation for ${method?.name || 'your brew'}</h3>
-                    <p><strong>Input:</strong> ${data.input?.origin || formData.origin} ${data.input?.roast_level || formData.roast_level} roast</p>
-                    <p><strong>Recommendation:</strong> ${data.recommendation || data.message || 'No recommendation available yet.'}</p>
-                    ${data.confidence ? `<p><strong>Confidence:</strong> ${data.confidence}</p>` : ''}
-                `;
-                result.style.display = 'block';
-            } catch (err) {
-                result.className = 'result error';
-                result.innerHTML = `<strong>Error:</strong> ${err.message}`;
-                result.style.display = 'block';
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '🤖 Get AI Recommendation';
-            }
+      // Basic validation
+      if (!origin || !roast || !method) {
+        showError('Please select an origin, roast level, and brewing method.');
+        return;
+      }
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Fetching…';
+
+      hide('errorState');
+      hide('resultCard');
+      show('loadingState');
+
+      const start = Date.now();
+
+      try {
+        const res = await fetch(`${API}/recommend`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            origin,
+            roast_level: roast,
+            brewing_method_id: parseInt(method)
+          })
         });
 
-        // Journey2: Log brew experience
-        document.getElementById('experienceForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn2');
-            const result = document.getElementById('result2');
-            btn.disabled = true;
-            btn.textContent = '📝 Logging your brew...';
-            result.style.display = 'none';
-
-            const formData = {
-                brewing_method_id: parseInt(document.getElementById('brewingMethod2').value),
-                origin: document.getElementById('origin2').value,
-                roast_level: document.getElementById('roastLevel2').value,
-                grind_size: document.getElementById('grindSize2').value,
-                water_temp_c: parseInt(document.getElementById('waterTemp2').value),
-                ratio: parseFloat(document.getElementById('ratio2').value),
-                brew_time_s: parseInt(document.getElementById('brewTime2').value),
-                rating: parseFloat(document.getElementById('rating2').value),
-                notes: document.getElementById('notes2').value
-            };
-
-            try {
-                const res = await fetch('/brews', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                });
-                const data = await res.json();
-
-                if (data.id) {
-                    result.className = 'result success';
-                    result.innerHTML = `
-                        <h3>✅ Brew Logged Successfully!</h3>
-                        <p>Your brew (ID: ${data.id}) has been recorded.</p>
-                        <p style="margin-top: 12px;">
-                            <button onclick="compareBrew(${data.id})" style="width:auto; padding: 8px 16px; font-size: 14px;">
-                                🔍 Compare with AI Recommendation
-                            </button>
-                        </p>
-                        <div id="compareResult${data.id}"></div>
-                    `;
-                } else {
-                    result.className = 'result error';
-                    result.innerHTML = `<strong>Error:</strong> ${data.error || 'Failed to log brew'}`;
-                }
-                result.style.display = 'block';
-            } catch (err) {
-                result.className = 'result error';
-                result.innerHTML = `<strong>Error:</strong> ${err.message}`;
-                result.style.display = 'block';
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '📝 Log My Brew';
-            }
-        });
-
-        // Compare brew with AI
-        async function compareBrew(brewId) {
-            const resultDiv = document.getElementById(`compareResult${brewId}`);
-            resultDiv.innerHTML = '<p class="loading">🔍 Comparing with AI recommendation...</p>';
-
-            try {
-                const res = await fetch(`/brews/${brewId}/compare`);
-                const data = await res.json();
-
-                resultDiv.innerHTML = `
-                    <div class="compare-grid">
-                        <div class="compare-box">
-                            <h4>☕ Your Brew</h4>
-                            <p>Temp: ${data.user_brew.water_temp_c}°C</p>
-                            <p>Ratio: 1:${(1/data.user_brew.ratio).toFixed(0)}</p>
-                            <p>Time: ${data.user_brew.brew_time_s}s</p>
-                            <p>Grind: ${data.user_brew.grind_size}</p>
-                            <p>Rating: ${data.user_brew.rating}/5</p>
-                        </div>
-                        <div class="compare-box">
-                            <h4>🤖 AI Recommendation</h4>
-                            <p>Temp: ${data.ai_recommendation.water_temp_c}°C</p>
-                            <p>Ratio: 1:${(1/data.ai_recommendation.ratio).toFixed(0)}</p>
-                            <p>Time: ${data.ai_recommendation.brew_time_s}s</p>
-                            <p>Grind: ${data.ai_recommendation.grind_size}</p>
-                        </div>
-                    </div>
-                    <p style="margin-top: 12px;"><strong>Analysis:</strong> ${data.analysis}</p>
-                    <p><strong>Match Score:</strong> ${(data.match_score * 100).toFixed(0)}%</p>
-                `;
-            } catch (err) {
-                resultDiv.innerHTML = `<p class="error">Error comparing: ${err.message}</p>`;
-            }
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || err.message || `API error ${res.status}`);
         }
 
-        loadBrewingMethods();
-    </script>
+        const data = await res.json();
+        const elapsed = Date.now() - start;
+        // Minimum 400ms to feel alive
+        if (elapsed < 400) await delay(400 - elapsed);
+
+        renderResult(data);
+
+      } catch (err) {
+        showError(err.message || 'Something went wrong. Check your connection and try again.');
+      } finally {
+        hide('loadingState');
+        btn.disabled = false;
+        btn.textContent = 'Get recommendation';
+      }
+    }
+
+    // ── Render the result card ──────────────────────────────────
+    function renderResult(data) {
+      const input = data.input || {};
+      const methodMap = window._methodMap || {};
+      const methodName = data.brewing_method || '';
+
+      // Header
+      document.getElementById('resMethod').textContent = methodName;
+      document.getElementById('resOrigin').textContent =
+        `${input.origin || ''} · ${(input.roast_level || '').replace('-', '‑')} roast`;
+
+      // Confidence badge
+      const badge = document.getElementById('resBadge');
+      const conf = (data.confidence || 'low').toLowerCase();
+      badge.className = `confidence-badge ${conf}`;
+      document.getElementById('resBadgeText').textContent =
+        conf.charAt(0).toUpperCase() + conf.slice(1) + ' confidence';
+
+      // Params
+      document.getElementById('resTemp').textContent =
+        input.water_temp_c != null ? `${input.water_temp_c}°` : '—';
+      document.getElementById('resRatio').textContent =
+        input.ratio != null ? formatRatio(input.ratio) : '—';
+      document.getElementById('resGrind').textContent =
+        input.grind_size ? capFirst(input.grind_size) : '—';
+      document.getElementById('resTime').textContent =
+        input.brew_time_s != null ? formatTime(input.brew_time_s) : '—';
+
+      // Technique steps
+      const techSection = document.getElementById('techniqueSection');
+      const techList = document.getElementById('techniqueSteps');
+      techList.innerHTML = '';
+      const steps = renderTechnique(data.technique, methodName);
+      if (steps && steps.length > 0) {
+        steps.forEach(s => {
+          const li = document.createElement('li');
+          li.className = 'step';
+          li.innerHTML = `<span class="step-num"></span><span class="step-text">${escHtml(s)}</span>`;
+          techList.appendChild(li);
+        });
+        // Number the steps via CSS counter override
+        let num = 1;
+        techList.querySelectorAll('.step-num').forEach(el => {
+          el.textContent = num++;
+        });
+        techSection.style.display = '';
+      } else {
+        techSection.style.display = 'none';
+      }
+
+      // Data points
+      const dp = data.data_points_used;
+      document.getElementById('resDataPoints').innerHTML =
+        `<strong>${dp != null ? dp : '?'}</strong> community brew${dp !== 1 ? 's' : ''} informed this recommendation.`;
+
+      show('resultCard');
+
+      // Scroll result into view on mobile
+      if (window.innerWidth < 600) {
+        document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────
+    function show(id) { document.getElementById(id).classList.remove('hidden'); }
+    function hide(id) { document.getElementById(id).classList.add('hidden'); }
+    function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+    function capFirst(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+    function escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+               .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+    function showError(msg) {
+      const el = document.getElementById('errorState');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    // ── Allow Enter key to submit ───────────────────────────────
+    ['origin','roast','method'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', e => {
+        if (e.key === 'Enter') getRecommendation();
+      });
+    });
+
+    // ── Boot ────────────────────────────────────────────────────
+    bootstrap();
+  </script>
 </body>
 </html>
