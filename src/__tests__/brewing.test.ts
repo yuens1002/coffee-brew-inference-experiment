@@ -11,12 +11,13 @@ vi.mock('../lib/db.js', () => ({
   createRecommendation: vi.fn(),
   findRecentRecommendation: vi.fn(),
   linkBrewToRecommendation: vi.fn(),
+  getBrewLinks: vi.fn(),
 }));
 
 import brewingRoutes from '../routes/brewing.js';
 import {
   getBrewingMethods, addBrew, getBrews, getBrewById,
-  getOrigins, createRecommendation, findRecentRecommendation,
+  getOrigins, createRecommendation, findRecentRecommendation, getBrewLinks,
 } from '../lib/db.js';
 
 const mockMethods: BrewingMethod[] = [
@@ -28,6 +29,11 @@ const mockMethods: BrewingMethod[] = [
     grind_size: 'medium-fine',
     default_brew_time_s: 210,
     default_ratio: 0.0625,
+    technique: {
+      bloom_weight_ratio: 2,
+      bloom_duration_s: 45,
+      pour_stages: [{ at_s: 0, volume_ml: 60, note: 'bloom' }],
+    },
   },
 ];
 
@@ -109,6 +115,7 @@ beforeEach(() => {
   vi.mocked(getBrews).mockResolvedValue({ count: 0, brews: [] });
   vi.mocked(createRecommendation).mockResolvedValue(mockRecommendationRecord);
   vi.mocked(findRecentRecommendation).mockResolvedValue(null);
+  vi.mocked(getBrewLinks).mockResolvedValue([]);
 });
 
 describe('GET /origins', () => {
@@ -328,6 +335,30 @@ describe('GET /brews/:id/compare', () => {
 
     expect(res.status).toBe(404);
   });
+
+  it('returns real match_score when a recommendation link exists', async () => {
+    vi.mocked(getBrewById).mockResolvedValue(mockBrew);
+    vi.mocked(getBrewingMethods).mockResolvedValue(mockMethods);
+    vi.mocked(getBrewLinks).mockResolvedValue([{ brew_id: 1, recommendation_id: 1, match_confidence: 0.82, linked_at: '2026-05-27T00:00:00Z' }]);
+
+    const res = await brewingRoutes.request('/brews/1/compare');
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.match_score).toBe(0.82);
+  });
+
+  it('falls back to 0.5 match_score when no recommendation link exists', async () => {
+    vi.mocked(getBrewById).mockResolvedValue(mockBrew);
+    vi.mocked(getBrewingMethods).mockResolvedValue(mockMethods);
+    vi.mocked(getBrewLinks).mockResolvedValue([]);
+
+    const res = await brewingRoutes.request('/brews/1/compare');
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.match_score).toBe(0.5);
+  });
 });
 
 describe('POST /recommend', () => {
@@ -350,6 +381,9 @@ describe('POST /recommend', () => {
     expect(Array.isArray(body.sources)).toBe(true);
     expect(typeof body.data_points_used).toBe('number');
     expect(typeof body.id).toBe('number');
+    // AC-TST-2: technique is present and is an object
+    expect(body.technique).toBeDefined();
+    expect(typeof body.technique).toBe('object');
   });
 
   it('falls back to first method when no method_id provided', async () => {

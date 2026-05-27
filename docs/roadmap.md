@@ -55,13 +55,13 @@ Each brewing method has its own technique vocabulary. A technique schema must be
 
 ### Deliverables
 
-- [ ] `technique` JSONB field on `brewing_methods` — method-scoped schema defining what technique dimensions exist for each method (e.g. `bloom_weight_ratio`, `pour_stages`, `agitation`)
+- [x] `technique` JSONB field on `brewing_methods` — method-scoped schema defining what technique dimensions exist for each method (e.g. `bloom_weight_ratio`, `pour_stages`, `agitation`)
 - [ ] `technique` JSONB field on `brews` — stores per-brew technique data conforming to that method's schema, extracted from `notes` or provided explicitly
 - [ ] LLM extraction pass at ingest time — when a brew is logged with technique-rich `notes`, extract and normalize technique fields into the structured schema; run as a background job, non-blocking
 - [ ] Scraping pipeline (from Phase 3) feeds technique extraction — roaster guides and forum posts are the primary data source; extraction scales this across community data without requiring users to manually fill technique fields
 - [ ] Technique consensus in `computeBestBrew` — extend weighted scoring to aggregate technique patterns across matched brews (weighted mode for categorical fields like `agitation`, weighted average for numeric fields like `bloom_duration_s`)
 - [ ] Narrative synthesis at query time — when `confidence` is `medium` or `high`, pass consensus technique data through an LLM to generate a step-by-step brew guide; this is where LLM narrative recommendation (punted from Phase 2) earns its place
-- [ ] `recommend` response extended with `technique` object and optional `narrative` string
+- [x] `recommend` response extended with `technique` object and optional `narrative` string
 
 **Owner**: `/backend-architect`, `/backend-architect` (LLM extraction), `/devops` (scraping infra)  
 **Depends on**: Phase 3 scraping pipeline (data volume), Neon JSONB support (already available)  
@@ -89,6 +89,7 @@ Ship a stable, publicly reachable MCP endpoint.
 - [x] Set production URL in CLAUDE.md (`https://brew-guide-production.up.railway.app`)
 - [x] Rate limiting — 60 req/min REST, 20 req/min MCP (`hono-rate-limiter`, #219d5fc)
 - [x] Claude Desktop + MCP client connection docs added to README
+- [x] Landing page (`landing/index.html`) wired to live API
 - [ ] Submit to MCP Registry (registry.modelcontextprotocol.io) — low priority, post-competition
 
 **Owner**: `/devops`
@@ -97,6 +98,5 @@ Ship a stable, publicly reachable MCP endpoint.
 
 ## Icebox
 
-- Landing page (`landing/index.html`) wired to live API
 - Weekly coffee literature digest via `hermes-automation/`
 - Community brew leaderboard (highest-rated brews by method)

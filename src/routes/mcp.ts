@@ -3,7 +3,7 @@ import { StreamableHTTPTransport } from '@hono/mcp';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { corsHeaders, checkOrigin } from '../lib/mcp-common.js';
-import { getBrewingMethods, getBrews, getBrewById, addBrew } from '../lib/db.js';
+import { getBrewingMethods, getBrews, getBrewById, addBrew, getBrewLinks } from '../lib/db.js';
 import { computeBestBrew, tryLinkBrew, resolveOrigin } from '../lib/recommend.js';
 import type { Brew } from '../types.js';
 
@@ -29,7 +29,7 @@ function buildMcpServer(): McpServer {
     'recommend',
     {
       title: 'Recommend Brew Parameters',
-      description: 'Recommends brew parameters for a given coffee origin, roast level, and brewing method',
+      description: 'Get a community-consensus brew recommendation. Returns brew parameters (temp, ratio, grind, time), confidence tier (high/medium/low based on community data), sources, and method-specific technique guidance (e.g. bloom timing, pour stages, steep time).',
       inputSchema: {
         origin: z.string().describe('Coffee origin (e.g. Colombia, Ethiopia)'),
         roast_level: z.string().optional().describe('Roast level (light, medium, dark)'),
@@ -121,6 +121,9 @@ function buildMcpServer(): McpServer {
       const tempDelta = method ? brew.water_temp_c - method.default_temp_c : 0;
       const timeDelta = method ? brew.brew_time_s - method.default_brew_time_s : 0;
 
+      const links = await getBrewLinks(brew.id);
+      const matchScore = links.length > 0 ? links[0].match_confidence : 0.5;
+
       return {
         content: [
           {
@@ -145,7 +148,7 @@ function buildMcpServer(): McpServer {
               analysis: method
                 ? `Your water was ${tempDelta > 0 ? `${tempDelta}°C hotter` : `${Math.abs(tempDelta)}°C cooler`} and brew time ${timeDelta > 0 ? `${timeDelta}s longer` : `${Math.abs(timeDelta)}s shorter`} than the standard ${method.name} recommendation.`
                 : 'No baseline method found for comparison.',
-              match_score: 0.5,
+              match_score: matchScore,
             }),
           },
         ],

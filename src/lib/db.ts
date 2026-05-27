@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import type {
   BrewingMethod, Brew, BrewWithMethod, BrewSource,
-  Origin, RecommendationRecord, BrewRecommendationLink,
+  Origin, RecommendationRecord, BrewRecommendationLink, BrewTechnique,
 } from '../types.js';
 
 const prisma = new PrismaClient();
@@ -42,6 +42,7 @@ export async function getBrewingMethods(): Promise<BrewingMethod[]> {
     default_temp_c: r.default_temp_c,
     default_brew_time_s: r.default_brew_time_s,
     grind_size: r.grind_size,
+    technique: r.technique as BrewTechnique | null,
   }));
 }
 
@@ -263,7 +264,7 @@ export async function linkBrewToRecommendation(
 }
 
 export async function getBrewLinks(brewId: number): Promise<BrewRecommendationLink[]> {
-  const rows = await prisma.brewRecommendationLink.findMany({ where: { brew_id: brewId } });
+  const rows = await prisma.brewRecommendationLink.findMany({ where: { brew_id: brewId }, orderBy: { linked_at: 'desc' } });
   return rows.map((r) => ({
     brew_id: r.brew_id,
     recommendation_id: r.recommendation_id,

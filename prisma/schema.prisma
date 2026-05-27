@@ -26,6 +26,7 @@ model BrewingMethod {
   grind_size          String
   default_brew_time_s Int
   default_ratio       Float
+  technique           Json?            // method-scoped technique schema (JSONB in Postgres)
   brews               Brew[]
   recommendations     Recommendation[]
 

@@ -11,12 +11,13 @@ vi.mock('../lib/db.js', () => ({
   createRecommendation: vi.fn(),
   findRecentRecommendation: vi.fn(),
   linkBrewToRecommendation: vi.fn(),
+  getBrewLinks: vi.fn(),
 }));
 
 import mcpRoute from '../routes/mcp.js';
 import {
   getBrewingMethods, getBrews, getBrewById, addBrew,
-  getOrigins, createRecommendation, findRecentRecommendation,
+  getOrigins, createRecommendation, findRecentRecommendation, getBrewLinks,
 } from '../lib/db.js';
 
 const MCP_HEADERS = {
@@ -56,6 +57,11 @@ const mockMethod: BrewingMethod = {
   grind_size: 'medium-fine',
   default_brew_time_s: 210,
   default_ratio: 0.0625,
+  technique: {
+    bloom_weight_ratio: 2,
+    bloom_duration_s: 45,
+    pour_stages: [{ at_s: 0, volume_ml: 60, note: 'bloom' }],
+  },
 };
 
 const mockRecommendationRecord: RecommendationRecord = {
@@ -125,6 +131,9 @@ describe('MCP tool: recommend', () => {
     expect(Array.isArray(result.sources)).toBe(true);
     expect(typeof result.data_points_used).toBe('number');
     expect(typeof result.id).toBe('number');
+    // AC-TST-2: technique is present and is an object
+    expect(result.technique).toBeDefined();
+    expect(typeof result.technique).toBe('object');
   });
 
   it('returns isError when brewing_method_id does not match', async () => {
@@ -274,6 +283,7 @@ describe('MCP tool: compare_brew', () => {
     };
     vi.mocked(getBrewById).mockResolvedValue(mockBrew);
     vi.mocked(getBrewingMethods).mockResolvedValue([mockMethod]);
+    vi.mocked(getBrewLinks).mockResolvedValue([]);
 
     const data = await callMcp('tools/call', {
       name: 'compare_brew',
@@ -289,14 +299,36 @@ describe('MCP tool: compare_brew', () => {
   });
 
   it('returns isError when brew not found', async () => {
-    vi.mocked(getBrewById).mockResolvedValue(null);
+      vi.mocked(getBrewById).mockResolvedValue(null);
 
-    const data = await callMcp('tools/call', {
-      name: 'compare_brew',
-      arguments: { brew_id: 999 },
+      const data = await callMcp('tools/call', {
+        name: 'compare_brew',
+        arguments: { brew_id: 999 },
+      });
+
+      expect(data.result.isError!).toBe(true);
+      expect(data.result.content![0].text).toBe('Brew not found');
     });
 
-    expect(data.result.isError!).toBe(true);
-    expect(data.result.content![0].text).toBe('Brew not found');
+    it('returns real match_score when brew_recommendation_links exist', async () => {
+      vi.mocked(getBrewById).mockResolvedValue({
+        id: 1, brewing_method_id: 1, origin: 'Colombia', roast_level: 'medium',
+        grind_size: 'medium', water_temp_c: 95, ratio: 0.0625, brew_time_s: 180,
+        rating: 4, notes: 'A bit bitter', created_at: '2026-05-25T10:30:00Z',
+        source: 'user_submitted',
+      });
+      vi.mocked(getBrewingMethods).mockResolvedValue([mockMethod]);
+      vi.mocked(getBrewLinks).mockResolvedValue([
+        { brew_id: 1, recommendation_id: 5, match_confidence: 0.82, linked_at: '2026-05-27T00:00:00Z' },
+      ]);
+
+      const data = await callMcp('tools/call', {
+        name: 'compare_brew',
+        arguments: { brew_id: 1 },
+      });
+
+      const result = JSON.parse(data.result.content![0].text);
+      expect(result.match_score).toBe(0.82);
+      expect(vi.mocked(getBrewLinks)).toHaveBeenCalledWith(1);
+    });
   });
-});

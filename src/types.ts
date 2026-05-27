@@ -7,6 +7,7 @@ export interface BrewingMethod {
   default_temp_c: number;
   default_brew_time_s: number;
   grind_size: string;
+  technique?: BrewTechnique | null;
 }
 
 /** Coffee origin reference (seed data + user-discovered) */
@@ -20,7 +21,7 @@ export interface Origin {
 }
 
 /** Source attribution for a brew entry */
-export type BrewSource = 'user_submitted' | 'scraped:reddit' | 'scraped:home-barista';
+export type BrewSource = 'user_submitted' | 'scraped:reddit' | 'scraped:home-barista' | 'scraped:roaster';
 
 /** Per-field extraction confidence from narrative parsing */
 export interface FieldConfidence {
@@ -89,6 +90,7 @@ export interface Recommendation {
   confidence: 'high' | 'medium' | 'low';
   sources: SourceRef[];
   data_points_used: number;
+  technique?: BrewTechnique | null;
 }
 
 /** Stored recommendation record (prediction log) */
@@ -135,3 +137,81 @@ export interface BrewWithMethod {
   source_url?: string;
   field_confidence?: string; // JSON-serialized FieldConfidence; used by computeBestBrew scoring
 }
+
+// ── Technique Types (Phase 6 — method-scoped) ──────────────
+
+export interface PourOverTechnique {
+  bloom_weight_ratio: number;   // multiplier of coffee weight, e.g. 2 = 2x dose
+  bloom_duration_s: number;
+  pour_stages: Array<{
+    at_s: number;
+    volume_ml: number;
+    note?: string;
+  }>;
+  agitation?: string;           // 'swirl' | 'stir' | 'none'
+  drawdown_target_s?: number;
+}
+
+export interface EspressoTechnique {
+  preinfusion_s?: number;
+  yield_ratio: number;          // e.g. 2 = 1:2 in:out by weight
+  shot_time_s: number;
+  pressure_bar?: number;
+  filter_type?: string;         // 'paper' | 'metal' | 'cloth'
+}
+
+export interface FrenchPressTechnique {
+  steep_time_s: number;
+  plunge_speed?: string;        // 'slow' | 'medium'
+  pre_wet?: boolean;
+  stir_at_s?: number;
+}
+
+export interface AeroPressTechnique {
+  inverted: boolean;
+  steep_time_s: number;
+  stir_count?: number;
+  filter_type?: string;         // 'paper' | 'metal'
+}
+
+export interface ColdBrewTechnique {
+  steep_time_h: number;
+  steep_temp?: string;          // 'room' | 'fridge'
+  dilution_ratio?: number;
+}
+
+export interface MokaPotTechnique {
+  preheat_water: boolean;
+  heat_level?: string;          // 'low' | 'medium'
+  tamp?: string;                // 'none' | 'light'
+}
+
+export interface ChemexTechnique {
+  filter_rinse: boolean;
+  bloom_duration_s: number;
+  bloom_weight_ratio: number;
+  pour_stages: Array<{ at_s: number; volume_ml: number; note?: string }>;
+}
+
+export interface SiphonTechnique {
+  heat_source?: string;         // 'butane' | 'halogen' | 'electric'
+  stir_pattern?: string;
+  drawdown_time_s?: number;
+}
+
+export interface TurkishTechnique {
+  heat_level?: string;          // 'low' | 'medium'
+  foam_technique?: string;      // 'traditional' | 'none'
+  serve_with_grounds?: boolean;
+}
+
+export type BrewTechnique =
+  | PourOverTechnique
+  | EspressoTechnique
+  | FrenchPressTechnique
+  | AeroPressTechnique
+  | ColdBrewTechnique
+  | MokaPotTechnique
+  | ChemexTechnique
+  | SiphonTechnique
+  | TurkishTechnique;

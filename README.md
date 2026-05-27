@@ -22,7 +22,7 @@
 | Tool | Description |
 |------|-------------|
 | `get_brewing_methods` | Returns all 8 brewing methods with default parameters |
-| `recommend` | Community-consensus brew recommendation (origin + roast → params + confidence) |
+| `recommend` | Community-consensus brew recommendation (origin + roast → params + confidence). Returns brew parameters (temp, ratio, grind, time), confidence tier, sources, and method-specific technique guidance (bloom timing, pour stages, steep times). |
 | `log_brew` | Persist a brew experiment; links to any recent recommendation for the same origin + method |
 | `search_brews` | Filter the brew log by origin, method, limit |
 | `compare_brew` | Delta analysis of a logged brew against method baseline |

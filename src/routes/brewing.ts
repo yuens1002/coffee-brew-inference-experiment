@@ -1,11 +1,17 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { getBrewingMethods, getBrews, getBrewById, addBrew, getOrigins } from '../lib/db.js';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { getBrewingMethods, getBrews, getBrewById, addBrew, getOrigins, getBrewLinks } from '../lib/db.js';
 import { computeBestBrew, tryLinkBrew, resolveOrigin } from '../lib/recommend.js';
 import type { BrewingMethod, Brew } from '../types.js';
 
 const app = new Hono();
+
+// GET / — landing page
+const landingHtml = readFileSync(join(import.meta.dirname, '..', '..', 'landing', 'index.html'), 'utf-8');
+app.get('/', (c) => c.html(landingHtml));
 
 // GET /origins
 app.get('/origins', async (c) => {
@@ -49,9 +55,9 @@ const brewSchema = z.object({
   water_temp_c: z.number(),
   ratio: z.number(),
   brew_time_s: z.number(),
-  rating: z.number().min(1).max(5),
+  rating: z.number().int().min(1).max(5),
   notes: z.string().optional(),
-  source: z.enum(['user_submitted', 'scraped:reddit', 'scraped:home-barista']).optional().default('user_submitted'),
+  source: z.enum(['user_submitted', 'scraped:reddit', 'scraped:home-barista', 'scraped:roaster']).optional().default('user_submitted'),
   source_url: z.string().url().optional(),
   field_confidence: z.string().optional(),
 });
@@ -103,6 +109,10 @@ app.get('/brews/:id/compare', async (c) => {
   const brew = await getBrewById(id);
   if (!brew) return c.json({ error: 'Brew not found' }, 404);
 
+  const links = await getBrewLinks(brew.id);
+  // Real match confidence from brew_recommendation_links; falls back to 0.5 if no recommendation was linked
+  const matchScore = links.length > 0 ? links[0].match_confidence : 0.5;
+
   const methods = await getBrewingMethods();
   const method = methods.find((m) => m.id === brew.brewing_method_id);
 
@@ -129,7 +139,7 @@ app.get('/brews/:id/compare', async (c) => {
     analysis: method
       ? `Your water was ${tempDelta > 0 ? `${tempDelta}°C hotter` : `${Math.abs(tempDelta)}°C cooler`} and brew time ${timeDelta > 0 ? `${timeDelta}s longer` : `${Math.abs(timeDelta)}s shorter`} than the standard ${method.name} recommendation.`
       : 'No baseline method found for comparison.',
-    match_score: 0.5, // Stub — real scoring wired in Phase 2
+    match_score: matchScore,
   });
 });
 
