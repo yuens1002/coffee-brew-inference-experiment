@@ -26,6 +26,7 @@ docs/plans/
 | `unified-data-model` | `feat/unified-data-model` (merged) | review, retro |
 | `trust-schema-wiring` | `feat/trust-schema` (merged) | plan, ACs, review |
 | `neon-prisma-migration` | `feat/neon-prisma-migration` (merged) | plan, ACs, review |
+| `competition-sprint` | `feat/competition-sprint` | plan, ACs |
 
 ## AC table columns
 
