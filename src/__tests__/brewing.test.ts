@@ -29,6 +29,11 @@ const mockMethods: BrewingMethod[] = [
     grind_size: 'medium-fine',
     default_brew_time_s: 210,
     default_ratio: 0.0625,
+    technique: {
+      bloom_weight_ratio: 2,
+      bloom_duration_s: 45,
+      pour_stages: [{ at_s: 0, volume_ml: 60, note: 'bloom' }],
+    },
   },
 ];
 
@@ -376,6 +381,9 @@ describe('POST /recommend', () => {
     expect(Array.isArray(body.sources)).toBe(true);
     expect(typeof body.data_points_used).toBe('number');
     expect(typeof body.id).toBe('number');
+    // AC-TST-2: technique is present and is an object
+    expect(body.technique).toBeDefined();
+    expect(typeof body.technique).toBe('object');
   });
 
   it('falls back to first method when no method_id provided', async () => {

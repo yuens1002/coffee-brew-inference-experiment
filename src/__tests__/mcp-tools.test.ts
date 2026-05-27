@@ -56,6 +56,11 @@ const mockMethod: BrewingMethod = {
   grind_size: 'medium-fine',
   default_brew_time_s: 210,
   default_ratio: 0.0625,
+  technique: {
+    bloom_weight_ratio: 2,
+    bloom_duration_s: 45,
+    pour_stages: [{ at_s: 0, volume_ml: 60, note: 'bloom' }],
+  },
 };
 
 const mockRecommendationRecord: RecommendationRecord = {
@@ -125,6 +130,9 @@ describe('MCP tool: recommend', () => {
     expect(Array.isArray(result.sources)).toBe(true);
     expect(typeof result.data_points_used).toBe('number');
     expect(typeof result.id).toBe('number');
+    // AC-TST-2: technique is present and is an object
+    expect(result.technique).toBeDefined();
+    expect(typeof result.technique).toBe('object');
   });
 
   it('returns isError when brewing_method_id does not match', async () => {
