@@ -1,11 +1,17 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { getBrewingMethods, getBrews, getBrewById, addBrew, getOrigins, getBrewLinks } from '../lib/db.js';
 import { computeBestBrew, tryLinkBrew, resolveOrigin } from '../lib/recommend.js';
 import type { BrewingMethod, Brew } from '../types.js';
 
 const app = new Hono();
+
+// GET / — landing page
+const landingHtml = readFileSync(join(import.meta.dirname, '..', '..', 'landing', 'index.html'), 'utf-8');
+app.get('/', (c) => c.html(landingHtml));
 
 // GET /origins
 app.get('/origins', async (c) => {
@@ -49,7 +55,7 @@ const brewSchema = z.object({
   water_temp_c: z.number(),
   ratio: z.number(),
   brew_time_s: z.number(),
-  rating: z.number().min(1).max(5),
+  rating: z.number().int().min(1).max(5),
   notes: z.string().optional(),
   source: z.enum(['user_submitted', 'scraped:reddit', 'scraped:home-barista', 'scraped:roaster']).optional().default('user_submitted'),
   source_url: z.string().url().optional(),

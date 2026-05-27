@@ -1123,7 +1123,8 @@
 
   <!-- ── JavaScript ─────────────────────────────────────────── -->
   <script>
-    const API = 'http://localhost:4000';
+    // Use relative paths when served from same origin (via Hono), fallback for file://
+    const API = window.location.origin.startsWith('http') ? '' : 'http://localhost:4000';
 
     // ── State ──────────────────────────────────────────────────
     window._origins = [];
@@ -1394,9 +1395,9 @@
     }
 
     function formatRatio(ratio) {
-      // ratio = coffee/water, e.g. 0.0625 = 1:16
-      const water = Math.round(1 / ratio);
-      return `1:${water}`;
+      // ratio = coffee/water, e.g. 0.0625 = 1:16, or 0.06452 = 1:15.5
+      const water = 1 / ratio;
+      return '1:' + (Number.isInteger(water) ? water : water.toFixed(1));
     }
 
     // ── Recommendation handler ──────────────────────────────────
@@ -1520,6 +1521,12 @@
 
       if (!origin || !roast || !method) {
         showSubmitError('Origin, roast level, and brewing method are required.');
+        return;
+      }
+
+      // Validate required fields (Zod schema requires these)
+      if (!grind || !tempRaw || !ratioRaw || !timeRaw || _selectedRating <= 0) {
+        showSubmitError('All fields are required — please fill in grind, temp, ratio, time, and rating.');
         return;
       }
 

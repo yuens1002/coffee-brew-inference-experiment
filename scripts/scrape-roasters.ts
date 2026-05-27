@@ -11,8 +11,8 @@
   *   - Server must be reachable at API_BASE (default http://localhost:4000, set API_BASE env var to override)
   *   - DATABASE_URL must be set for the target database
   *
-  * Idempotency: safe to re-run. The server deduplicates by brew content
-  * (same origin + method + roast + parameters = same fingerprint).
+  * Idempotency: NOT idempotent — re-running will create duplicate brew entries.
+   * Run once per environment. To re-seed: truncate the brews table first.
   *
   * Production usage:
   *   API_BASE=https://brew-guide-production.up.railway.app npx tsx scripts/scrape-roasters.ts

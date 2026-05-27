@@ -6,7 +6,8 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "npx tsx watch src/server.ts",
-    "build": "tsc",
+        "dx": "npx tsx src/server.ts & python -m http.server 5173 -d landing",
+        "build": "tsc",
     "start": "node dist/server.js",
     "test": "vitest run",
     "test:watch": "vitest",

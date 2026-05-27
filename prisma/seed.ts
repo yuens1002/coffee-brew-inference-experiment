@@ -26,21 +26,22 @@ const SEED_ORIGINS = [
 ];
 
 const SEED_METHODS = [
-  { name: 'Pour Over', description: 'Hand-poured water over coffee grounds in a filter (V60, Chemex, etc.)', default_temp_c: 93, grind_size: 'medium-fine', default_brew_time_s: 210, default_ratio: 0.0625, technique: '{"bloom_weight_ratio":2,"bloom_duration_s":45,"pour_stages":[{"at_s":45,"volume_ml":60,"note":"centre pour, saturate grounds"},{"at_s":90,"volume_ml":120,"note":"spiral pour outward"},{"at_s":150,"volume_ml":120,"note":"final spiral pour"}],"agitation":"swirl","drawdown_target_s":210}' },
-  { name: 'French Press', description: 'Immersion brewing with a metal mesh filter', default_temp_c: 96, grind_size: 'coarse', default_brew_time_s: 240, default_ratio: 0.0667, technique: '{"steep_time_s":240,"plunge_speed":"slow","pre_wet":true,"stir_at_s":120}' },
-  { name: 'Aeropress', description: 'Rapid immersion + pressure extraction', default_temp_c: 85, grind_size: 'medium-fine', default_brew_time_s: 120, default_ratio: 0.0667, technique: '{"inverted":false,"steep_time_s":60,"stir_count":10,"filter_type":"paper"}' },
-  { name: 'Espresso', description: 'High-pressure extraction through finely ground coffee', default_temp_c: 92, grind_size: 'fine', default_brew_time_s: 30, default_ratio: 0.5, technique: '{"preinfusion_s":5,"yield_ratio":2,"shot_time_s":28,"pressure_bar":9,"filter_type":"metal"}' },
-  { name: 'Cold Brew', description: 'Long cold steep for smooth, low-acid coffee', default_temp_c: 20, grind_size: 'coarse', default_brew_time_s: 43200, default_ratio: 0.125, technique: '{"steep_time_h":18,"steep_temp":"fridge","dilution_ratio":1}' },
-  { name: 'Moka Pot', description: 'Stovetop pressure brewing', default_temp_c: 90, grind_size: 'fine', default_brew_time_s: 300, default_ratio: 0.1429, technique: '{"preheat_water":true,"heat_level":"low","tamp":"none"}' },
-  { name: 'Siphon', description: 'Vacuum-driven immersion brewing', default_temp_c: 93, grind_size: 'medium', default_brew_time_s: 90, default_ratio: 0.0667, technique: '{"heat_source":"halogen","stir_pattern":"figure-8","drawdown_time_s":60}' },
-  { name: 'Turkish', description: 'Very fine grind boiled in a cezve/ibrik', default_temp_c: 100, grind_size: 'extra-fine', default_brew_time_s: 180, default_ratio: 0.1, technique: '{"heat_level":"low","foam_technique":"traditional","serve_with_grounds":true}' },
+  { name: 'Pour Over', description: 'Hand-poured water over coffee grounds in a filter (V60, Chemex, etc.)', default_temp_c: 93, grind_size: 'medium-fine', default_brew_time_s: 210, default_ratio: 0.0625, technique: {bloom_weight_ratio:2,bloom_duration_s:45,pour_stages:[{at_s:45,volume_ml:60,note:'centre pour, saturate grounds'},{at_s:90,volume_ml:120,note:'spiral pour outward'},{at_s:150,volume_ml:120,note:'final spiral pour'}],agitation:'swirl',drawdown_target_s:210} },
+  { name: 'French Press', description: 'Immersion brewing with a metal mesh filter', default_temp_c: 96, grind_size: 'coarse', default_brew_time_s: 240, default_ratio: 0.0667, technique: {steep_time_s:240,plunge_speed:'slow',pre_wet:true,stir_at_s:120} },
+  { name: 'Aeropress', description: 'Rapid immersion + pressure extraction', default_temp_c: 85, grind_size: 'medium-fine', default_brew_time_s: 120, default_ratio: 0.0667, technique: {inverted:false,steep_time_s:60,stir_count:10,filter_type:'paper'} },
+  { name: 'Espresso', description: 'High-pressure extraction through finely ground coffee', default_temp_c: 92, grind_size: 'fine', default_brew_time_s: 30, default_ratio: 0.5, technique: {preinfusion_s:5,yield_ratio:2,shot_time_s:28,pressure_bar:9,filter_type:'metal'} },
+  { name: 'Cold Brew', description: 'Long cold steep for smooth, low-acid coffee', default_temp_c: 20, grind_size: 'coarse', default_brew_time_s: 43200, default_ratio: 0.125, technique: {steep_time_h:18,steep_temp:'fridge',dilution_ratio:1} },
+  { name: 'Moka Pot', description: 'Stovetop pressure brewing', default_temp_c: 90, grind_size: 'fine', default_brew_time_s: 300, default_ratio: 0.1429, technique: {preheat_water:true,heat_level:'low',tamp:'none'} },
+  { name: 'Siphon', description: 'Vacuum-driven immersion brewing', default_temp_c: 93, grind_size: 'medium', default_brew_time_s: 90, default_ratio: 0.0667, technique: {heat_source:'halogen',stir_pattern:'figure-8',drawdown_time_s:60} },
+  { name: 'Turkish', description: 'Very fine grind boiled in a cezve/ibrik', default_temp_c: 100, grind_size: 'extra-fine', default_brew_time_s: 180, default_ratio: 0.1, technique: {heat_level:'low',foam_technique:'traditional',serve_with_grounds:true} },
 ];
 
 // Community brew data — sourced from real roaster brew guides.
 // Pour Over: 8 roasters × ~3 brews = 22 entries
 // Espresso: 4 roasters × ~3 brews = 10 entries
 // Total: 32 community brews loaded on `prisma db seed`.
-// Re-running seed is idempotent (createMany skips duplicates by brew content).
+// NOTE: Re-running seed WILL create duplicates — run once per environment.
+// To re-seed fresh: truncate brews table first, then re-seed.
 const SEED_BREWS = [
   // ── Blue Bottle Coffee ──
   { brewing_method_id: 1, origin: 'Ethiopia',   roast_level: 'light',       grind_size: 'medium-fine',  water_temp_c: 93, ratio: 0.06452, brew_time_s: 180, rating: 4, source: 'scraped:roaster', source_url: 'https://bluebottlecoffee.com/brewing-guides', notes: 'Blue Bottle Guide — Ethiopia light roast. 3-stage pour: 45g bloom 45s, 150g at 0:45, 250g at 1:45. Swirl gently after bloom. Target drawdown 3:00. Expect floral and citrus notes.', field_confidence: '{"origin":1.0,"ratio":1.0,"water_temp_c":1.0,"grind_size":1.0}' },

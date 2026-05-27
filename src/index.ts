@@ -21,7 +21,7 @@ app.use('/recommend', rateLimiter({ windowMs: 60_000, limit: 60, keyGenerator })
 // Rate limit: MCP — 20 req/min per IP (tool calls are expensive)
 app.use('/mcp/*', rateLimiter({ windowMs: 60_000, limit: 20, keyGenerator }));
 
-// Mount brewing API routes
+// Mount brewing API routes (handles all / paths including landing page)
 app.route('/', brewingRoutes);
 
 // Mount MCP server

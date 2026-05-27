@@ -167,7 +167,7 @@ export interface FrenchPressTechnique {
   stir_at_s?: number;
 }
 
-export interface AeroPresssTechnique {
+export interface AeroPressTechnique {
   inverted: boolean;
   steep_time_s: number;
   stir_count?: number;
@@ -209,7 +209,7 @@ export type BrewTechnique =
   | PourOverTechnique
   | EspressoTechnique
   | FrenchPressTechnique
-  | AeroPresssTechnique
+  | AeroPressTechnique
   | ColdBrewTechnique
   | MokaPotTechnique
   | ChemexTechnique
