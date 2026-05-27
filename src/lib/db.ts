@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import type {
   BrewingMethod, Brew, BrewWithMethod, BrewSource,
-  Origin, RecommendationRecord, BrewRecommendationLink,
+  Origin, RecommendationRecord, BrewRecommendationLink, BrewTechnique,
 } from '../types.js';
 
 const prisma = new PrismaClient();
@@ -42,6 +42,7 @@ export async function getBrewingMethods(): Promise<BrewingMethod[]> {
     default_temp_c: r.default_temp_c,
     default_brew_time_s: r.default_brew_time_s,
     grind_size: r.grind_size,
+    technique: r.technique ? JSON.parse(r.technique) as BrewTechnique : null,
   }));
 }
 

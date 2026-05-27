@@ -11,12 +11,13 @@ vi.mock('../lib/db.js', () => ({
   createRecommendation: vi.fn(),
   findRecentRecommendation: vi.fn(),
   linkBrewToRecommendation: vi.fn(),
+  getBrewLinks: vi.fn(),
 }));
 
 import brewingRoutes from '../routes/brewing.js';
 import {
   getBrewingMethods, addBrew, getBrews, getBrewById,
-  getOrigins, createRecommendation, findRecentRecommendation,
+  getOrigins, createRecommendation, findRecentRecommendation, getBrewLinks,
 } from '../lib/db.js';
 
 const mockMethods: BrewingMethod[] = [
@@ -109,6 +110,7 @@ beforeEach(() => {
   vi.mocked(getBrews).mockResolvedValue({ count: 0, brews: [] });
   vi.mocked(createRecommendation).mockResolvedValue(mockRecommendationRecord);
   vi.mocked(findRecentRecommendation).mockResolvedValue(null);
+  vi.mocked(getBrewLinks).mockResolvedValue([]);
 });
 
 describe('GET /origins', () => {
