@@ -121,6 +121,9 @@ function buildMcpServer(): McpServer {
       const tempDelta = method ? brew.water_temp_c - method.default_temp_c : 0;
       const timeDelta = method ? brew.brew_time_s - method.default_brew_time_s : 0;
 
+      const links = await getBrewLinks(brew.id);
+      const matchScore = links.length > 0 ? links[0].match_confidence : 0.5;
+
       return {
         content: [
           {
@@ -145,7 +148,7 @@ function buildMcpServer(): McpServer {
               analysis: method
                 ? `Your water was ${tempDelta > 0 ? `${tempDelta}°C hotter` : `${Math.abs(tempDelta)}°C cooler`} and brew time ${timeDelta > 0 ? `${timeDelta}s longer` : `${Math.abs(timeDelta)}s shorter`} than the standard ${method.name} recommendation.`
                 : 'No baseline method found for comparison.',
-              match_score: 0.5,
+              match_score: matchScore,
             }),
           },
         ],

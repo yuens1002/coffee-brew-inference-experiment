@@ -77,7 +77,15 @@ Returns a brew recommendation computed from weighted consensus over logged brew 
   "recommendation": "No community data yet — using Pour Over defaults. For Colombia (medium roast), try Pour Over at 93°C with a medium-fine grind, 210s brew time, 1:16 ratio.",
   "confidence": "low",
   "sources": [],
-  "data_points_used": 0
+  "data_points_used": 0,
+  "technique": {
+    "method_id": 1,
+    "bloom_weight_ratio": 2,
+    "bloom_duration_s": 45,
+    "pour_stages": 3,
+    "target_drawdown_s": 210,
+    "notes": "Centre pour, keep grinds saturated"
+  }
 }
 ```
 

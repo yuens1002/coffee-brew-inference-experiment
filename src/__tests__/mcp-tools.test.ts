@@ -11,12 +11,13 @@ vi.mock('../lib/db.js', () => ({
   createRecommendation: vi.fn(),
   findRecentRecommendation: vi.fn(),
   linkBrewToRecommendation: vi.fn(),
+  getBrewLinks: vi.fn(),
 }));
 
 import mcpRoute from '../routes/mcp.js';
 import {
   getBrewingMethods, getBrews, getBrewById, addBrew,
-  getOrigins, createRecommendation, findRecentRecommendation,
+  getOrigins, createRecommendation, findRecentRecommendation, getBrewLinks,
 } from '../lib/db.js';
 
 const MCP_HEADERS = {
@@ -282,6 +283,7 @@ describe('MCP tool: compare_brew', () => {
     };
     vi.mocked(getBrewById).mockResolvedValue(mockBrew);
     vi.mocked(getBrewingMethods).mockResolvedValue([mockMethod]);
+    vi.mocked(getBrewLinks).mockResolvedValue([]);
 
     const data = await callMcp('tools/call', {
       name: 'compare_brew',
