@@ -299,14 +299,36 @@ describe('MCP tool: compare_brew', () => {
   });
 
   it('returns isError when brew not found', async () => {
-    vi.mocked(getBrewById).mockResolvedValue(null);
+      vi.mocked(getBrewById).mockResolvedValue(null);
 
-    const data = await callMcp('tools/call', {
-      name: 'compare_brew',
-      arguments: { brew_id: 999 },
+      const data = await callMcp('tools/call', {
+        name: 'compare_brew',
+        arguments: { brew_id: 999 },
+      });
+
+      expect(data.result.isError!).toBe(true);
+      expect(data.result.content![0].text).toBe('Brew not found');
     });
 
-    expect(data.result.isError!).toBe(true);
-    expect(data.result.content![0].text).toBe('Brew not found');
+    it('returns real match_score when brew_recommendation_links exist', async () => {
+      vi.mocked(getBrewById).mockResolvedValue({
+        id: 1, brewing_method_id: 1, origin: 'Colombia', roast_level: 'medium',
+        grind_size: 'medium', water_temp_c: 95, ratio: 0.0625, brew_time_s: 180,
+        rating: 4, notes: 'A bit bitter', created_at: '2026-05-25T10:30:00Z',
+        source: 'user_submitted',
+      });
+      vi.mocked(getBrewingMethods).mockResolvedValue([mockMethod]);
+      vi.mocked(getBrewLinks).mockResolvedValue([
+        { brew_id: 1, recommendation_id: 5, match_confidence: 0.82, linked_at: '2026-05-27T00:00:00Z' },
+      ]);
+
+      const data = await callMcp('tools/call', {
+        name: 'compare_brew',
+        arguments: { brew_id: 1 },
+      });
+
+      const result = JSON.parse(data.result.content![0].text);
+      expect(result.match_score).toBe(0.82);
+      expect(vi.mocked(getBrewLinks)).toHaveBeenCalledWith(1);
+    });
   });
-});
