@@ -8,7 +8,7 @@
  *
  * Requirements:
  *   - Dev server must be running: npm run dev
- *   - Server must be reachable at http://localhost:4000
+ *   - Server must be reachable at API_BASE (default http://localhost:4000, set API_BASE env var to override)
  *
  * Data sourced from published brewing guides by:
  *   Pour Over: Blue Bottle, Counter Culture, Stumptown, Intelligentsia,
@@ -16,7 +16,7 @@
  *   Espresso:  La Marzocco, Bottomless, Chromatic Coffee, Equator Coffees
  */
 
-const API_BASE = 'http://localhost:4000';
+const API_BASE = process.env.API_BASE || 'http://localhost:4000';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
