@@ -12,7 +12,7 @@ A public MCP server that acts as an agentic coffee knowledge base — answering 
 | MCP transport | `@hono/mcp` (Streamable HTTP) |
 | MCP protocol | `@modelcontextprotocol/sdk` |
 | Runtime | Node 24, TypeScript strict, ESM |
-| Database | sql.js (SQLite WASM, file-persisted at `data/coffee-brew.db`) |
+| Database | Neon Postgres + Prisma ORM |
 | Test runner | Vitest |
 
 ## Module map
@@ -25,7 +25,7 @@ src/
     brewing.ts       → REST routes (/origins, /brewing-methods, /brews, /recommend)
     mcp.ts           → MCP tool handlers + Streamable HTTP transport
   lib/
-    db.ts            → sql.js wrapper: all DB access; mock this in tests
+    db.ts            → Prisma client wrapper: all DB access; mock this in tests
     recommend.ts     → recommendation engine: computeBestBrew, tryLinkBrew, resolveOrigin
     mcp-common.ts    → checkOrigin, corsHeaders
   types.ts           → all shared interfaces (Brew, Recommendation, Origin, etc.)
@@ -39,7 +39,7 @@ Client → GET/POST /origins|/brewing-methods|/brews|/recommend
   → src/index.ts (CORS middleware)
   → src/routes/brewing.ts
   → src/lib/recommend.ts  (for /recommend and /brews — origin resolution + linking)
-  → src/lib/db.ts (sql.js)
+  → src/lib/db.ts (Prisma → Neon Postgres)
   → JSON response
 ```
 
@@ -49,7 +49,7 @@ MCP Client → POST /mcp
   → src/routes/mcp.ts: checkOrigin → buildMcpServer() → StreamableHTTPTransport
   → tool handler: get_brewing_methods | recommend | log_brew | search_brews | compare_brew
   → src/lib/recommend.ts  (for recommend and log_brew)
-  → src/lib/db.ts (sql.js)
+  → src/lib/db.ts (Prisma → Neon Postgres)
   → SSE response (event: message / data: {...})
 ```
 
@@ -200,5 +200,13 @@ Railway project: `brew-guide` — auto-deploys from `main` on `yuens1002/brew-gu
 
 See `docs/roadmap.md`. Highest-priority gaps:
 1. `compare_brew` — wire `match_score` from `brew_recommendation_links` (currently hardcoded `0.5`)
-2. Scraping pipeline — auto-ingest community data from Reddit + forums
-3. Persistent storage — migrate from sql.js to Neon Postgres + Prisma (Phase 4)
+2. Semantic similarity on brew notes (keyword search before committing to embeddings)
+3. Scraping pipeline — ingest roaster brew guides + community sources as seed for technique data (Phase 6)
+4. Technique Intelligence (Phase 6) — method-scoped technique fields, LLM extraction at ingest, narrative synthesis at query time
+5. Register with MCP Registry (registry.modelcontextprotocol.io) — low priority, post-competition
+
+### Narrative synthesis — opt-in design decision
+
+The `recommend` endpoint will not include an LLM-generated narrative by default even when technique data and confidence are sufficient to produce one. Clients must explicitly request it (e.g. `"include_narrative": true` in the request body).
+
+**Reason:** Narrative synthesis introduces an LLM call on the hot path. The rest of the recommendation engine is fully deterministic and sub-100ms. Making narrative opt-in preserves that guarantee for all clients that don't need it — MCP tool callers, programmatic integrations, and latency-sensitive frontends get the fast deterministic response unconditionally. Clients that want the step-by-step guide (human-facing UIs, conversational agents) pay the LLM latency only when they ask for it.

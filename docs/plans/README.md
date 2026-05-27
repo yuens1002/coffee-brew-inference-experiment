@@ -25,7 +25,7 @@ docs/plans/
 | `mvp-autonomous` | — | plan |
 | `unified-data-model` | `feat/unified-data-model` (merged) | review, retro |
 | `trust-schema-wiring` | `feat/trust-schema` (merged) | plan, ACs, review |
-| `neon-prisma-migration` | `feat/neon-prisma-migration` | plan, ACs |
+| `neon-prisma-migration` | `feat/neon-prisma-migration` (merged) | plan, ACs, review |
 
 ## AC table columns
 
