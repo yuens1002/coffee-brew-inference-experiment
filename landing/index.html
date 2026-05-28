@@ -1040,8 +1040,8 @@
                               <div class="data-points" id="resDataPoints"></div>
                               <div class="vote-buttons" id="voteButtons" style="display:none;">
                                 <span class="vote-label">Helpful?</span>
-                                <button class="vote-btn" id="voteUpBtn" onclick="onVote('up')" title="These steps helped">👍 <span id="voteUpCount">0</span></button>
-                                <button class="vote-btn" id="voteDownBtn" onclick="onVote('down')" title="These steps missed the mark">👎 <span id="voteDownCount">0</span></button>
+                                <button class="vote-btn" id="voteUpBtn" onclick="onVote('up')" aria-label="Mark as helpful">👍 <span id="voteUpCount">0</span></button>
+                                <button class="vote-btn" id="voteDownBtn" onclick="onVote('down')" aria-label="Mark as not helpful">👎 <span id="voteDownCount">0</span></button>
                               </div>
                             </div>
 
@@ -1291,7 +1291,9 @@
   <!-- ── JavaScript ─────────────────────────────────────────── -->
   <script>
     // Use relative paths when served from same origin (via Hono), fallback for file://
-    const API = (window.location.hostname === 'localhost' && window.location.port !== '4000') ? 'http://localhost:4000' : '';
+    const API = window.location.protocol === 'file:' ? 'http://localhost:4000'
+              : (window.location.hostname === 'localhost' && window.location.port !== '4000') ? 'http://localhost:4000'
+              : '';
 
     // ── State ──────────────────────────────────────────────────
         window._origins = [];
@@ -1957,8 +1959,10 @@
               const counts = await res.json();
               document.getElementById('voteUpCount').textContent = counts.thumbs_up ?? 0;
               document.getElementById('voteDownCount').textContent = counts.thumbs_down ?? 0;
+            } else {
+              resetVote();
             }
-          } catch (_) { /* silently ignore network errors on votes */ }
+          } catch (_) { resetVote(); }
         }
 
         function resetVote() {
