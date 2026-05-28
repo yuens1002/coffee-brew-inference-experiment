@@ -8,7 +8,7 @@
     "dev": "npx tsx watch src/server.ts",
         "dx": "npx tsx src/server.ts & python -m http.server 5173 -d landing",
         "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "npx prisma migrate deploy && node dist/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:generate": "prisma generate",
