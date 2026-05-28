@@ -1,17 +1,11 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { getBrewingMethods, getBrews, getBrewById, addBrew, getOrigins, getBrewLinks } from '../lib/db.js';
 import { computeBestBrew, tryLinkBrew, resolveOrigin } from '../lib/recommend.js';
 import type { BrewingMethod, Brew } from '../types.js';
 
 const app = new Hono();
-
-// GET / — landing page
-const landingHtml = readFileSync(join(import.meta.dirname, '..', '..', 'landing', 'index.html'), 'utf-8');
-app.get('/', (c) => c.html(landingHtml));
 
 // GET /origins
 app.get('/origins', async (c) => {
@@ -153,6 +147,7 @@ const recommendSchema = z.object({
   water_temp_c: z.number().optional(),
   ratio: z.number().optional(),
   brew_time_s: z.number().optional(),
+  variety: z.string().optional(),
 });
 
 app.post('/recommend', zValidator('json', recommendSchema), async (c) => {
@@ -161,7 +156,7 @@ app.post('/recommend', zValidator('json', recommendSchema), async (c) => {
     ? (await resolveOrigin(params.origin)).resolved
     : params.origin;
   try {
-    const result = await computeBestBrew({ ...params, origin: resolvedOrigin });
+    const result = await computeBestBrew({ ...params, origin: resolvedOrigin, variety: params.variety });
     return c.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Recommendation failed';
