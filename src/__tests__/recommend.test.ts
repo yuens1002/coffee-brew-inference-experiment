@@ -11,12 +11,14 @@ vi.mock('../lib/db.js', () => ({
   createRecommendation: vi.fn(),
   findRecentRecommendation: vi.fn(),
   linkBrewToRecommendation: vi.fn(),
+  getVoteCounts: vi.fn(),
 }));
 
 import { computeBestBrew, tryLinkBrew, resolveOrigin } from '../lib/recommend.js';
 import {
   getBrewingMethods, getBrews, getOrigins,
   createRecommendation, findRecentRecommendation, linkBrewToRecommendation,
+  getVoteCounts,
 } from '../lib/db.js';
 
 const mockMethod: BrewingMethod = {
@@ -72,6 +74,7 @@ beforeEach(() => {
   vi.mocked(getOrigins).mockResolvedValue([]);
   vi.mocked(createRecommendation).mockResolvedValue(mockRecRecord);
   vi.mocked(findRecentRecommendation).mockResolvedValue(null);
+  vi.mocked(getVoteCounts).mockResolvedValue({ thumbs_up: 0, thumbs_down: 0 });
   vi.mocked(linkBrewToRecommendation).mockResolvedValue({
     brew_id: 1, recommendation_id: 1, match_confidence: 0.85, linked_at: '',
   });
