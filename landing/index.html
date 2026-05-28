@@ -683,14 +683,54 @@
     }
 
     .connect-cards {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
 
-    @media (min-width: 600px) {
-      .connect-cards { grid-template-columns: repeat(3, 1fr); }
-    }
+        @media (min-width: 600px) {
+          .connect-cards { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+          .connect-cards {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 8px;
+            gap: 12px;
+          }
+
+          .connect-cards::-webkit-scrollbar {
+            height: 4px;
+          }
+
+          .connect-cards::-webkit-scrollbar-thumb {
+            background: var(--border-hi);
+            border-radius: 2px;
+          }
+
+          .connect-card {
+            min-width: 260px;
+            flex-shrink: 0;
+            scroll-snap-align: start;
+          }
+
+          .scroll-hint {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 10px;
+          }
+        }
+
+        @media (min-width: 769px) {
+          .scroll-hint { display: none; }
+        }
 
     .connect-card {
       background: var(--bg-card);
@@ -1134,10 +1174,10 @@
           <div class="code-block">"brew-guide": {<br>&nbsp;&nbsp;"type": "http",<br>&nbsp;&nbsp;"url": "https://brew-guide-<br>&nbsp;&nbsp;production.up.railway.app/mcp"<br>}</div>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- ── What's coming ─────────────────────────────────────── -->
+            <div class="scroll-hint">👆 Swipe for more →</div>
+          </div>
+        </section>
   <section id="whats-coming">
     <div class="container">
       <span class="section-label">On the horizon</span>
