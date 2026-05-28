@@ -39,7 +39,7 @@
 | AC | D# | What | How | Pass |
 |----|----|------|-----|------|
 | AC-DOC-1 | D3 | `docs/API-SPEC.md` updated with technique field | Code review | `POST /recommend` response example includes `technique` object |
-| AC-DOC-2 | D7 | Competition entry draft complete | Review: `docs/competition-entry.md` | All 4 sections present (what it is, how Hermes built it, MCP angle, what's next); addresses all 4 judging criteria |
+| AC-DOC-2 | D7 | Competition entry draft complete | Review: `.claude/competition-entry.md` (moved out of public docs post-sprint) | All 4 sections present (what it is, how Hermes built it, MCP angle, what's next); addresses all 4 judging criteria |
 | AC-DOC-3 | D7 | Entry published on DEV.to | Manual verification | Live DEV.to URL with "Build With Hermes Agent" challenge tag |
 
 ---

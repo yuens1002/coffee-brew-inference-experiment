@@ -19,7 +19,7 @@ All in-scope code deliverables (D1–D4, D6, D7) are fully implemented, the test
 | D4: compare_brew match_score wired | `src/routes/brewing.ts` calls `getBrewLinks(brewId)`; uses `links[0].match_confidence` when present, falls back to `0.5`; `src/lib/db.ts` exports `getBrewLinks` | ✅ Complete |
 | D1: Scraper | `scripts/scrape-roasters.ts` (700 lines); `src/types.ts` adds `'scraped:roaster'` to source enum; `src/routes/brewing.ts` adds `source` field | ✅ Complete (script ships; production run = D5) |
 | D6: Landing page | `landing/index.html` (1522 lines) — dark roast palette, live demo widget hitting `/recommend`, mobile responsive, technique steps rendered | ✅ Complete |
-| D7: Competition entry | `docs/competition-entry.md` (133 lines) — all 4 plan sections present; addresses all 4 judging criteria | ✅ Complete (draft; live publish = AC-DOC-3) |
+| D7: Competition entry | `.claude/competition-entry.md` — all 4 plan sections present; addresses all 4 judging criteria; published to DEV.to | ✅ Complete |
 | D5: Deploy + seed production DB | Not a code change — manual `/devops` step post-merge | ⏳ Pending (intentional) |
 
 ### Code changes not tied to any deliverable
