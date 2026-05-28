@@ -1239,10 +1239,35 @@
     const API = window.location.origin.startsWith('http') ? '' : 'http://localhost:4000';
 
     // ── State ──────────────────────────────────────────────────
-    window._origins = [];
+        window._origins = [];
+        window._originMap = {}; // displayName -> {name, variety}
         window._methodMap = {};
         let _selectedRating = 0;
-        let _voteState = null; // null, 'up', or 'down'
+            let _voteState = null; // null, 'up', or 'down'
+
+        // Parse origin text for variety: "Papua New Guinea (bourbon)" → {origin, variety}
+        function parseOriginVariety(text) {
+          const match = text.match(/^(.+?)\s*\(([^)]+)\)$/);
+          if (match) {
+            return { origin: match[1].trim(), variety: match[2].trim() };
+          }
+          return { origin: text.trim(), variety: null };
+        }
+
+        // Build display name from origin data: "Ethiopia Yirgacheffe" or "Vietnam (robusta)"
+        function buildOriginDisplay(o) {
+          let display = o.name;
+          if (o.subregion) {
+            const first = o.subregion.split(',')[0].trim();
+            if (first && first !== o.name) {
+              display = o.name + ' ' + first;
+            }
+          }
+          if (o.variety) {
+            display = display + ' (' + o.variety + ')';
+          }
+          return display;
+        }
 
     // ── Combobox factory ────────────────────────────────────────
     function initCombobox(inputId, dropdownId) {
@@ -1250,46 +1275,53 @@
       const dropdown = document.getElementById(dropdownId);
 
       function renderDropdown(filterText) {
-        const lc = filterText.toLowerCase();
-        const filtered = filterText
-          ? window._origins.filter(o => o.name.toLowerCase().includes(lc))
-          : window._origins;
+              const lc = filterText.toLowerCase();
+              const filtered = filterText
+                ? window._origins.filter(o => o.displayName.toLowerCase().includes(lc))
+                : window._origins;
 
-        dropdown.innerHTML = '';
+              dropdown.innerHTML = '';
 
-        filtered.forEach(o => {
-          const item = document.createElement('div');
-          item.className = 'combobox-item';
-          item.textContent = o.name;
-          item.addEventListener('mousedown', e => {
-            e.preventDefault();
-            input.value = o.name;
-            dropdown.classList.add('hidden');
-          });
-          dropdown.appendChild(item);
-        });
+              filtered.forEach(o => {
+                const item = document.createElement('div');
+                item.className = 'combobox-item';
+                item.textContent = o.displayName;
+                item.addEventListener('mousedown', e => {
+                                  e.preventDefault();
+                                  input.value = o.displayName;
+                                  // Store variety from known origin on input element
+                                  const mapped = window._originMap[o.displayName];
+                                  input.dataset.variety = mapped ? mapped.variety || '' : '';
+                                  dropdown.classList.add('hidden');
+                                });
+                dropdown.appendChild(item);
+              });
 
-        if (filterText.length > 0 && filtered.length === 0) {
-          const newItem = document.createElement('div');
-          newItem.className = 'combobox-item combobox-item-new';
-          newItem.textContent = `Use "${filterText}" as a new origin`;
-          newItem.addEventListener('mousedown', e => {
-            e.preventDefault();
-            dropdown.classList.add('hidden');
-          });
-          dropdown.appendChild(newItem);
-        }
+              if (filterText.length > 0 && filtered.length === 0) {
+                              const newItem = document.createElement('div');
+                              newItem.className = 'combobox-item combobox-item-new';
+                              newItem.textContent = `Use "${filterText}" as a new origin`;
+                              newItem.addEventListener('mousedown', e => {
+                                e.preventDefault();
+                                // Parse variety from typed text: "Papua New Guinea (bourbon)"
+                                const parsed = parseOriginVariety(filterText);
+                                input.value = parsed.origin;
+                                input.dataset.variety = parsed.variety || '';
+                                dropdown.classList.add('hidden');
+                              });
+                              dropdown.appendChild(newItem);
+                            }
 
-        if (dropdown.children.length > 0) {
-          dropdown.classList.remove('hidden');
-        } else {
-          dropdown.classList.add('hidden');
-        }
-      }
+              if (dropdown.children.length > 0) {
+                dropdown.classList.remove('hidden');
+              } else {
+                dropdown.classList.add('hidden');
+              }
+            }
 
-      input.addEventListener('focus', () => renderDropdown(input.value));
-      input.addEventListener('input', () => renderDropdown(input.value));
-      input.addEventListener('blur',  () => setTimeout(() => dropdown.classList.add('hidden'), 150));
+      input.addEventListener('focus', () => { input.dataset.variety = ''; renderDropdown(input.value); });
+                  input.addEventListener('input', () => { input.dataset.variety = ''; renderDropdown(input.value); });
+                  input.addEventListener('blur',  () => setTimeout(() => dropdown.classList.add('hidden'), 150));
     }
 
     // ── Bootstrap: load origins + methods ──────────────────────
@@ -1300,15 +1332,29 @@
       ]);
 
       // Origins
-      if (originsRes.status === 'fulfilled' && originsRes.value.ok) {
-        window._origins = await originsRes.value.json();
-      } else {
-        window._origins = [
-          'Ethiopia','Colombia','Kenya','Brazil','Guatemala','Indonesia',
-          'Costa Rica','Honduras','Peru','Rwanda','Burundi','Panama','Jamaica',
-          'Yemen','Vietnam','India','Mexico','El Salvador','Bolivia','Tanzania'
-        ].map(name => ({ name }));
-      }
+            if (originsRes.status === 'fulfilled' && originsRes.value.ok) {
+              const rawOrigins = await originsRes.value.json();
+              window._origins = rawOrigins.map(o => ({
+                ...o,
+                displayName: buildOriginDisplay(o)
+              }));
+              // Build lookup map: displayName -> {name, variety}
+              window._origins.forEach(o => {
+                window._originMap[o.displayName] = { name: o.name, variety: o.variety || null };
+              });
+            } else {
+              const fallbackNames = [
+                'Ethiopia Yirgacheffe','Colombia Huila','Kenya Nyeri','Brazil Minas Gerais',
+                'Guatemala Antigua','Indonesia Sumatra','Costa Rica Tarrazú','Honduras Copán',
+                'Peru Cajamarca','Rwanda Nyamasheke','Burundi Kayanza','Panama Boquete',
+                'Jamaica','Yemen Mocha','Vietnam','India Karnataka','Mexico Chiapas',
+                'El Salvador Santa Ana','Bolivia','Tanzania Kilimanjaro'
+              ];
+              window._origins = fallbackNames.map(name => ({ displayName: name }));
+              fallbackNames.forEach(name => {
+                window._originMap[name] = { name, variety: null };
+              });
+            }
 
       initCombobox('originInputA', 'originDropdownA');
       initCombobox('originInputB', 'originDropdownB');
@@ -1360,16 +1406,20 @@
 
     // ── Slide transitions ───────────────────────────────────────
     function onShareClick(e) {
-      e.preventDefault();
-      // Pre-fill Face B from Face A selection
-      document.getElementById('originInputB').value = document.getElementById('originInputA').value;
-      document.getElementById('roastB').value        = document.getElementById('roastA').value;
-      document.getElementById('methodB').value       = document.getElementById('methodA').value;
+              e.preventDefault();
+              // Pre-fill Face B from Face A selection
+              const originA = document.getElementById('originInputA').value;
+              const originInputB = document.getElementById('originInputB');
+              originInputB.value = originA;
+              // Copy variety from Face A origin selection
+              originInputB.dataset.variety = document.getElementById('originInputA').dataset.variety || '';
+              document.getElementById('roastB').value        = document.getElementById('roastA').value;
+              document.getElementById('methodB').value       = document.getElementById('methodA').value;
 
-      const wrapper = document.getElementById('slideWrapper');
-      wrapper.style.height = document.getElementById('faceB').offsetHeight + 'px';
-      wrapper.classList.add('show-b');
-    }
+              const wrapper = document.getElementById('slideWrapper');
+              wrapper.style.height = document.getElementById('faceB').offsetHeight + 'px';
+              wrapper.classList.add('show-b');
+            }
 
     function onBackClick(e) {
       e.preventDefault();
@@ -1515,37 +1565,45 @@
 
     // ── Recommendation handler ──────────────────────────────────
     async function getRecommendation() {
-      const origin = document.getElementById('originInputA').value.trim();
-      const roast  = document.getElementById('roastA').value;
-      const method = document.getElementById('methodA').value;
+          const origin = document.getElementById('originInputA').value.trim();
+          const roast  = document.getElementById('roastA').value;
+          const method = document.getElementById('methodA').value;
 
-      if (!origin || !roast || !method) {
-        showError('Please select an origin, roast level, and brewing method.');
-        return;
-      }
+          if (!origin || !roast || !method) {
+            showError('Please select an origin, roast level, and brewing method.');
+            return;
+          }
 
-      const btn = document.getElementById('submitBtn');
-      btn.disabled = true;
-      btn.textContent = 'Fetching…';
+          // Parse variety from origin text if not already set by combobox selection
+                    const inputA = document.getElementById('originInputA');
+                    const parsed = parseOriginVariety(origin);
+                    const variety = inputA.dataset.variety || parsed.variety || null;
+                    const cleanOrigin = parsed.origin;
 
-      hide('errorState');
-            hide('resultCard');
-            document.getElementById('voteButtons').style.display = 'none';
-            show('loadingState');
-      updateSliderHeight();
+          const btn = document.getElementById('submitBtn');
+          btn.disabled = true;
+          btn.textContent = 'Fetching…';
 
-      const start = Date.now();
+          hide('errorState');
+          hide('resultCard');
+          document.getElementById('voteButtons').style.display = 'none';
+          show('loadingState');
+          updateSliderHeight();
 
-      try {
-        const res = await fetch(`${API}/recommend`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            origin,
+          const start = Date.now();
+          const body = {
+            origin: cleanOrigin,
             roast_level: roast,
             brewing_method_id: parseInt(method)
-          })
-        });
+          };
+          if (variety) body.variety = variety;
+
+          try {
+            const res = await fetch(`${API}/recommend`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body)
+            });
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
@@ -1656,11 +1714,17 @@
           updateSliderHeight();
 
           const body = {
-            origin,
-            roast_level: roast,
-            brewing_method_id: parseInt(method),
-            source: 'user_submitted'
-          };
+                      origin,
+                      roast_level: roast,
+                      brewing_method_id: parseInt(method),
+                      source: 'user_submitted'
+                    };
+
+                    // Include variety from selected origin or parsed from input
+                                        const inputB = document.getElementById('originInputB');
+                                        const parsedB = parseOriginVariety(origin);
+                                        const variety = inputB.dataset.variety || parsedB.variety || null;
+                                        if (variety) body.variety = variety;
 
           if (grind)                 body.grind_size   = grind;
           if (tempRaw)               body.water_temp_c = parseInt(tempRaw);
@@ -1698,17 +1762,19 @@
         }
 
         function clearBrewForm() {
-          document.getElementById('originInputB').value = '';
-          document.getElementById('roastB').value = '';
-          document.getElementById('methodB').value = '';
-          document.getElementById('grindB').value = '';
-          document.getElementById('tempB').value = '';
-          document.getElementById('ratioB').value = '';
-          document.getElementById('timeB').value = '';
-          document.getElementById('notesB').value = '';
-          _selectedRating = 0;
-          paintStars(0);
-        }
+                  const originB = document.getElementById('originInputB');
+                  originB.value = '';
+                  originB.dataset.variety = '';
+                  document.getElementById('roastB').value = '';
+                  document.getElementById('methodB').value = '';
+                  document.getElementById('grindB').value = '';
+                  document.getElementById('tempB').value = '';
+                  document.getElementById('ratioB').value = '';
+                  document.getElementById('timeB').value = '';
+                  document.getElementById('notesB').value = '';
+                  _selectedRating = 0;
+                  paintStars(0);
+                }
 
     // ── Helpers ─────────────────────────────────────────────────
     function show(id) { document.getElementById(id).classList.remove('hidden'); }
