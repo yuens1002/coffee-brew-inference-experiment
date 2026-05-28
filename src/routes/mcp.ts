@@ -35,12 +35,13 @@ function buildMcpServer(): McpServer {
         roast_level: z.string().optional().describe('Roast level (light, medium, dark)'),
         brewing_method_id: z.number().optional().describe('Preferred brewing method ID'),
         grind_size: z.string().optional().describe('Preferred grind size'),
+        variety: z.string().optional().describe('Coffee variety (e.g. heirloom, robusta, SL28)'),
       },
     },
-    async ({ origin, roast_level, brewing_method_id, grind_size }) => {
+    async ({ origin, roast_level, brewing_method_id, grind_size, variety }) => {
       const resolvedOrigin = origin ? (await resolveOrigin(origin)).resolved : origin;
       try {
-        const result = await computeBestBrew({ origin: resolvedOrigin, roast_level, brewing_method_id, grind_size });
+        const result = await computeBestBrew({ origin: resolvedOrigin, roast_level, brewing_method_id, grind_size, variety });
         return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Recommendation failed';

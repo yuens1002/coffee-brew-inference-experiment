@@ -24,7 +24,7 @@ Make the knowledge base queryable from logged brew history.
 - [x] `search_brews` MCP tool — filter brew log by origin, method, limit
 - [x] `get_brew` / `GET /brews/:id` — fetch a single brew by ID
 - [ ] Semantic similarity on brew notes (embedding + vector search or keyword)
-- [ ] Scraping pipeline — ingest roaster brew guides + community sources (Reddit, home-barista.com) as the primary seed for technique data (see Phase 6)
+- [x] Scraping pipeline — roaster guides shipped via `scripts/scrape-roasters.ts` (32 brews from 12 roasters); community sources still future
 
 **Owner**: `/backend-architect`
 

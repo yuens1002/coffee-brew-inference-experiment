@@ -3,26 +3,27 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const SEED_ORIGINS = [
-  { name: 'Ethiopia', region: 'Africa', subregion: 'Yirgacheffe, Sidamo, Guji, Harrar', aliases: 'Ethiopean,Ethopian', is_verified: true },
-  { name: 'Colombia', region: 'South America', subregion: 'Huila, Nariño, Antioquia', aliases: 'Colombian,Columbia', is_verified: true },
-  { name: 'Kenya', region: 'Africa', subregion: 'Nyeri, Kirinyaga, Muranga', aliases: 'Kenyan', is_verified: true },
-  { name: 'Brazil', region: 'South America', subregion: 'Minas Gerais, São Paulo, Espírito Santo', aliases: 'Brazillian,Brasilian', is_verified: true },
-  { name: 'Costa Rica', region: 'Central America', subregion: 'Tarrazú, West Valley, Central Valley', aliases: 'Costa Rican', is_verified: true },
-  { name: 'Guatemala', region: 'Central America', subregion: 'Antigua, Huehuetenango, Atitlán', aliases: 'Guatamalan', is_verified: true },
-  { name: 'Panama', region: 'Central America', subregion: 'Boquete, Volcán', aliases: 'Panamanian', is_verified: true },
-  { name: 'Honduras', region: 'Central America', subregion: 'Copán, Marcala, Santa Bárbara', aliases: '', is_verified: true },
-  { name: 'El Salvador', region: 'Central America', subregion: 'Santa Ana, Apaneca-Ilamatepec', aliases: '', is_verified: true },
-  { name: 'Peru', region: 'South America', subregion: 'Cajamarca, Cusco, Junín', aliases: 'Peruvian', is_verified: true },
-  { name: 'Tanzania', region: 'Africa', subregion: 'Kilimanjaro, Arusha, Mbeya', aliases: 'Tanzanian', is_verified: true },
-  { name: 'Rwanda', region: 'Africa', subregion: 'Nyamasheke, Gakenke, Huye', aliases: 'Rwandan', is_verified: true },
-  { name: 'Burundi', region: 'Africa', subregion: 'Kayanza, Ngozi, Muyinga', aliases: '', is_verified: true },
-  { name: 'Yemen', region: 'Middle East', subregion: 'Mocha, Mattari, Hirazi', aliases: 'Yemeni', is_verified: true },
-  { name: 'Indonesia', region: 'Asia Pacific', subregion: 'Sumatra, Java, Sulawesi, Bali', aliases: 'Indonesian,Sumatran', is_verified: true },
-  { name: 'India', region: 'Asia Pacific', subregion: 'Karnataka, Tamil Nadu, Kerala', aliases: 'Indian', is_verified: true },
-  { name: 'Vietnam', region: 'Asia Pacific', subregion: 'Central Highlands, Da Lat', aliases: 'Vietnamese', is_verified: true },
-  { name: 'Mexico', region: 'Central America', subregion: 'Chiapas, Oaxaca, Veracruz', aliases: 'Mexican', is_verified: true },
-  { name: 'Nicaragua', region: 'Central America', subregion: 'Jinotega, Matagalpa, Nueva Segovia', aliases: 'Nicaraguan', is_verified: true },
-  { name: 'Ecuador', region: 'South America', subregion: 'Loja, Pichincha, Zamora-Chinchipe', aliases: 'Ecuadorian', is_verified: true },
+  { name: 'Ethiopia', region: 'Africa', subregion: 'Yirgacheffe, Sidamo, Guji, Harrar', variety: 'heirloom', aliases: 'Ethiopean,Ethopian', is_verified: true },
+  { name: 'Colombia', region: 'South America', subregion: 'Huila, Nariño, Antioquia', variety: 'caturra/typica/castillo', aliases: 'Colombian,Columbia', is_verified: true },
+  { name: 'Kenya', region: 'Africa', subregion: 'Nyeri, Kirinyaga, Muranga', variety: 'SL28/SL34', aliases: 'Kenyan', is_verified: true },
+  { name: 'Brazil', region: 'South America', subregion: 'Minas Gerais, São Paulo, Espírito Santo', variety: 'bourbon/catuai', aliases: 'Brazillian,Brasilian', is_verified: true },
+  { name: 'Costa Rica', region: 'Central America', subregion: 'Tarrazú, West Valley, Central Valley', variety: null, aliases: 'Costa Rican', is_verified: true },
+  { name: 'Guatemala', region: 'Central America', subregion: 'Antigua, Huehuetenango, Atitlán', variety: null, aliases: 'Guatamalan', is_verified: true },
+  { name: 'Panama', region: 'Central America', subregion: 'Boquete, Volcán', variety: null, aliases: 'Panamanian', is_verified: true },
+  { name: 'Honduras', region: 'Central America', subregion: 'Copán, Marcala, Santa Bárbara', variety: null, aliases: '', is_verified: true },
+  { name: 'El Salvador', region: 'Central America', subregion: 'Santa Ana, Apaneca-Ilamatepec', variety: null, aliases: '', is_verified: true },
+  { name: 'Peru', region: 'South America', subregion: 'Cajamarca, Cusco, Junín', variety: null, aliases: 'Peruvian', is_verified: true },
+  { name: 'Tanzania', region: 'Africa', subregion: 'Kilimanjaro, Arusha, Mbeya', variety: null, aliases: 'Tanzanian', is_verified: true },
+  { name: 'Rwanda', region: 'Africa', subregion: 'Nyamasheke, Gakenke, Huye', variety: null, aliases: 'Rwandan', is_verified: true },
+  { name: 'Burundi', region: 'Africa', subregion: 'Kayanza, Ngozi, Muyinga', variety: null, aliases: '', is_verified: true },
+  { name: 'Yemen', region: 'Middle East', subregion: 'Mocha, Mattari, Hirazi', variety: 'heirloom', aliases: 'Yemeni', is_verified: true },
+  { name: 'Indonesia', region: 'Asia Pacific', subregion: 'Sumatra, Java, Sulawesi, Bali', variety: 'typica/catimor', aliases: 'Indonesian,Sumatran', is_verified: true },
+  { name: 'India', region: 'Asia Pacific', subregion: 'Karnataka, Tamil Nadu, Kerala', variety: null, aliases: 'Indian', is_verified: true },
+  { name: 'Vietnam', region: 'Asia Pacific', subregion: 'Central Highlands, Da Lat', variety: 'robusta', aliases: 'Vietnamese', is_verified: true },
+  { name: 'Vietnam arabica', region: 'Asia Pacific', subregion: 'Da Lat', variety: 'arabica', aliases: '', is_verified: true },
+  { name: 'Mexico', region: 'Central America', subregion: 'Chiapas, Oaxaca, Veracruz', variety: null, aliases: 'Mexican', is_verified: true },
+  { name: 'Nicaragua', region: 'Central America', subregion: 'Jinotega, Matagalpa, Nueva Segovia', variety: null, aliases: 'Nicaraguan', is_verified: true },
+  { name: 'Ecuador', region: 'South America', subregion: 'Loja, Pichincha, Zamora-Chinchipe', variety: null, aliases: 'Ecuadorian', is_verified: true },
 ];
 
 const SEED_METHODS = [
@@ -94,7 +95,7 @@ async function main() {
   for (const origin of SEED_ORIGINS) {
     await prisma.origin.upsert({
       where: { name: origin.name },
-      update: {},
+      update: { variety: origin.variety },  // update variety on re-seed
       create: origin,
     });
   }

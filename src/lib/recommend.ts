@@ -1,7 +1,7 @@
 import {
   getBrewingMethods, getBrews,
   createRecommendation, findRecentRecommendation, linkBrewToRecommendation,
-  getOrigins,
+  getOrigins, getVoteCounts,
 } from './db.js';
 import type {
   BrewWithMethod, Brew,
@@ -18,7 +18,7 @@ const ADJACENT_ROASTS: Record<string, string[]> = {
   dark: ['medium-dark'],
 };
 
-function matchScore(brew: BrewWithMethod, params: RecommendationParams): number {
+function matchScore(brew: BrewWithMethod, params: RecommendationParams, originVarieties?: Map<string, string | null>): number {
   let score = 0;
   let weights = 0;
 
@@ -27,6 +27,19 @@ function matchScore(brew: BrewWithMethod, params: RecommendationParams): number 
     if (brew.origin.toLowerCase() === params.origin.toLowerCase()) score += 3;
     else if (brew.origin.toLowerCase().includes(params.origin.toLowerCase()) ||
              params.origin.toLowerCase().includes(brew.origin.toLowerCase())) score += 1.5;
+  }
+
+  // Variety scoring — same origin + same variety scores higher
+  if (params.variety && originVarieties && params.origin) {
+    const brewVariety = originVarieties.get(params.origin.toLowerCase());
+    if (brewVariety) {
+      weights += 1;
+      // Check if the requested variety matches the origin's known variety(ies)
+      const brewVarieties = brewVariety.split('/').map(v => v.trim().toLowerCase());
+      if (brewVarieties.includes(params.variety.toLowerCase())) {
+        score += 1; // exact variety match
+      }
+    }
   }
 
   if (params.brewing_method_id) {
@@ -127,9 +140,17 @@ export async function computeBestBrew(
     : methods[0];
   if (!method) throw new Error(params.brewing_method_id ? 'Brewing method not found' : 'No brewing methods available');
 
+  // Build origin→variety map for variety-aware scoring
+  const origins = await getOrigins();
+  const originVarieties = new Map<string, string | null>();
+  for (const o of origins) {
+    if (o.variety) originVarieties.set(o.name.toLowerCase(), o.variety);
+  }
+
   // Determine data points provided
   let dataPoints = 0;
   if (params.origin) dataPoints++;
+  if (params.variety) dataPoints++;
   if (params.roast_level) dataPoints++;
   if (params.brewing_method_id) dataPoints++;
   if (params.grind_size) dataPoints++;
@@ -144,7 +165,7 @@ export async function computeBestBrew(
   const scored = brews
     .map((brew) => ({
       brew,
-      matchScore: matchScore(brew, params),
+      matchScore: matchScore(brew, params, originVarieties),
     }))
     .filter(({ matchScore: ms }) => ms > 0)
     .map(({ brew, matchScore: ms }) => ({
@@ -210,38 +231,44 @@ export async function computeBestBrew(
   const recommendation = `${sourceText}. For ${originText}${roastText}, try ${method.name} at ${consensus.water_temp_c}°C with a ${consensus.grind_size} grind, ${consensus.brew_time_s}s brew time, 1:${Math.round(1 / consensus.ratio)} ratio.`;
 
   // Store prediction
-  const rec = await createRecommendation({
-    brewing_method_id: method.id,
-    origin: params.origin || '',
-    roast_level: params.roast_level || '',
-    grind_size: consensus.grind_size,
-    water_temp_c: consensus.water_temp_c,
-    ratio: consensus.ratio,
-    brew_time_s: consensus.brew_time_s,
-    recommendation,
-    confidence,
-    confidence_breakdown: JSON.stringify({ data_points: dataPoints, match_count: topN.length, match_quality: topN.length > 0 ? (totalWeight / topN.length).toFixed(2) : '0' }),
-    sources: JSON.stringify(sources),
-  });
-
-  return {
-    id: rec.id,
-    brewing_method: method.name,
-    input: {
+    const rec = await createRecommendation({
+      brewing_method_id: method.id,
       origin: params.origin || '',
       roast_level: params.roast_level || '',
       grind_size: consensus.grind_size,
       water_temp_c: consensus.water_temp_c,
       ratio: consensus.ratio,
       brew_time_s: consensus.brew_time_s,
-    },
-    recommendation,
-    confidence,
-    sources,
-    data_points_used: topN.length,
-    technique: method.technique ?? null,
-  };
-}
+      recommendation,
+      confidence,
+      confidence_breakdown: JSON.stringify({ data_points: dataPoints, match_count: topN.length, match_quality: topN.length > 0 ? (totalWeight / topN.length).toFixed(2) : '0' }),
+      sources: JSON.stringify(sources),
+    });
+
+    // Fetch vote counts for this recommendation
+    const voteCounts = await getVoteCounts(rec.id);
+
+    return {
+      id: rec.id,
+      brewing_method: method.name,
+      input: {
+        origin: params.origin || '',
+        variety: params.variety,
+        roast_level: params.roast_level || '',
+        grind_size: consensus.grind_size,
+        water_temp_c: consensus.water_temp_c,
+        ratio: consensus.ratio,
+        brew_time_s: consensus.brew_time_s,
+      },
+      recommendation,
+      confidence,
+      sources,
+      data_points_used: topN.length,
+      technique: method.technique ?? null,
+      thumbs_up: voteCounts.thumbs_up,
+      thumbs_down: voteCounts.thumbs_down,
+    };
+  }
 
 // ── Auto-Linking ────────────────────────────────────────
 

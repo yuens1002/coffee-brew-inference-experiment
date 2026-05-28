@@ -15,6 +15,7 @@ export async function getOrigins(): Promise<Origin[]> {
     name: r.name,
     region: r.region,
     subregion: r.subregion ?? undefined,
+    variety: r.variety ?? undefined,
     aliases: r.aliases ?? undefined,
     is_verified: r.is_verified,
   }));
@@ -249,16 +250,18 @@ export async function linkBrewToRecommendation(
   brewId: number,
   recommendationId: number,
   matchConfidence: number,
+  userVote?: 'up' | 'down' | null,
 ): Promise<BrewRecommendationLink> {
   const r = await prisma.brewRecommendationLink.upsert({
     where: { brew_id_recommendation_id: { brew_id: brewId, recommendation_id: recommendationId } },
-    update: { match_confidence: matchConfidence, linked_at: new Date() },
-    create: { brew_id: brewId, recommendation_id: recommendationId, match_confidence: matchConfidence },
+    update: { match_confidence: matchConfidence, user_vote: userVote ?? null, linked_at: new Date() },
+    create: { brew_id: brewId, recommendation_id: recommendationId, match_confidence: matchConfidence, user_vote: userVote ?? null },
   });
   return {
     brew_id: r.brew_id,
     recommendation_id: r.recommendation_id,
     match_confidence: r.match_confidence,
+    user_vote: (r.user_vote as 'up' | 'down' | null) ?? undefined,
     linked_at: r.linked_at.toISOString(),
   };
 }
@@ -269,6 +272,23 @@ export async function getBrewLinks(brewId: number): Promise<BrewRecommendationLi
     brew_id: r.brew_id,
     recommendation_id: r.recommendation_id,
     match_confidence: r.match_confidence,
+    user_vote: (r.user_vote as 'up' | 'down' | null) ?? undefined,
     linked_at: r.linked_at.toISOString(),
   }));
+}
+
+// ── Vote Counts ───────────────────────────────────────────
+
+export async function getVoteCounts(recommendationId: number): Promise<{ thumbs_up: number; thumbs_down: number }> {
+  const links = await prisma.brewRecommendationLink.findMany({
+    where: { recommendation_id: recommendationId, user_vote: { not: null } },
+    select: { user_vote: true },
+  });
+  let thumbs_up = 0;
+  let thumbs_down = 0;
+  for (const link of links) {
+    if (link.user_vote === 'up') thumbs_up++;
+    else if (link.user_vote === 'down') thumbs_down++;
+  }
+  return { thumbs_up, thumbs_down };
 }

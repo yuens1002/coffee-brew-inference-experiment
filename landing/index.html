@@ -46,11 +46,21 @@
     }
 
     /* ── Hero ───────────────────────────────────────────────── */
-    .hero {
-      padding: 80px 20px 60px;
-      text-align: center;
-      background: radial-gradient(ellipse 80% 60% at 50% 0%, #3a200a 0%, var(--bg) 70%);
-    }
+        .hero {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 80px 20px 60px;
+          text-align: center;
+          background: radial-gradient(ellipse 80% 60% at 50% 0%, #3a200a 0%, var(--bg) 70%);
+          animation: heroFadeIn 0.8s ease-out;
+        }
+
+        @keyframes heroFadeIn {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
 
     .hero-eyebrow {
       display: inline-block;
@@ -225,8 +235,9 @@
     }
 
     .btn:hover:not(:disabled) {
-      background: var(--gold);
-    }
+          background: var(--gold);
+          color: #110900;
+        }
 
     .btn:active:not(:disabled) {
       transform: scale(0.98);
@@ -397,6 +408,57 @@
       font-size: 14px;
       color: var(--cream);
       line-height: 1.5;
+    }
+
+    /* ── Vote buttons ────────────────────────────────────────── */
+    .vote-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+      align-items: center;
+    }
+
+    .vote-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-right: 8px;
+    }
+
+    .vote-btn {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      user-select: none;
+    }
+
+    .vote-btn:hover {
+      border-color: var(--border-hi);
+      color: var(--cream);
+    }
+
+    .vote-btn.selected-up {
+      background: rgba(200, 134, 10, 0.2);
+      border-color: var(--amber);
+      color: var(--gold);
+    }
+
+    .vote-btn.selected-down {
+      background: rgba(224, 82, 82, 0.12);
+      border-color: rgba(224, 82, 82, 0.4);
+      color: #e07070;
     }
 
     /* ── Data points ────────────────────────────────────────── */
@@ -621,14 +683,54 @@
     }
 
     .connect-cards {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
 
-    @media (min-width: 600px) {
-      .connect-cards { grid-template-columns: repeat(3, 1fr); }
-    }
+        @media (min-width: 600px) {
+          .connect-cards { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+          .connect-cards {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 8px;
+            gap: 12px;
+          }
+
+          .connect-cards::-webkit-scrollbar {
+            height: 4px;
+          }
+
+          .connect-cards::-webkit-scrollbar-thumb {
+            background: var(--border-hi);
+            border-radius: 2px;
+          }
+
+          .connect-card {
+            min-width: 260px;
+            flex-shrink: 0;
+            scroll-snap-align: start;
+          }
+
+          .scroll-hint {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 10px;
+          }
+        }
+
+        @media (min-width: 769px) {
+          .scroll-hint { display: none; }
+        }
 
     .connect-card {
       background: var(--bg-card);
@@ -767,16 +869,15 @@
   <header class="hero">
     <div class="container">
       <span class="hero-eyebrow">☕ Community-Powered Brew Intelligence</span>
-      <h1>Every great cup starts with<br><em>the right question.</em></h1>
-      <p class="hero-desc">
-        Brew Guide turns your grinder, kettle, and bag of beans into a question
-        any AI can answer. <strong>Community consensus over thousands of real brews</strong> —
-        not generic averages. Ask how to brew your Ethiopian light roast.
-        Get specifics: bloom time, pour stages, temperature, ratio.
-      </p>
+      <h1>8 brewing methods.<br><em>Community consensus.</em><br>Technique guidance.</h1>
+            <p class="hero-desc">
+              Brew Guide gives you brew parameters backed by real community data.
+              Pick your origin, roast, and method — get temperature, ratio, grind,
+              time, and step-by-step technique specific to your cup.
+            </p>
       <a href="#demo" class="btn" style="display:inline-block;width:auto;padding:13px 32px;text-decoration:none;">
-        Try the live demo →
-      </a>
+              Try the live demo ↓
+            </a>
     </div>
   </header>
 
@@ -827,6 +928,11 @@
               Get recommendation
             </button>
 
+            <!-- Share CTA -->
+            <div class="share-cta" id="shareCta">
+              Already brewed? <a href="#" onclick="onShareClick(event)">Share your results →</a>
+            </div>
+
             <!-- Loading state -->
             <div id="loadingState" class="loading-state hidden">
               <div class="spinner"></div>
@@ -876,13 +982,16 @@
               </div>
 
               <!-- Data points -->
-              <div class="data-points" id="resDataPoints"></div>
+                            <div class="data-points" id="resDataPoints"></div>
 
-              <!-- Share CTA -->
-              <div class="share-cta">
-                Already brewed? <a href="#" onclick="onShareClick(event)">Share your results →</a>
-              </div>
-            </div>
+                            <!-- Vote buttons -->
+                            <div class="vote-buttons" id="voteButtons" style="display:none;">
+                              <span class="vote-label">Helpful?</span>
+                              <button class="vote-btn" id="voteUpBtn" onclick="onVote('up')" title="This recommendation helped">👍 Yes</button>
+                              <button class="vote-btn" id="voteDownBtn" onclick="onVote('down')" title="This recommendation missed the mark">👎 No</button>
+                            </div>
+
+                          </div>
 
           </div>
           <!-- /faceA -->
@@ -979,9 +1088,10 @@
             <div id="submitErrorState" class="error-state hidden"></div>
 
             <div id="submitSuccessState" class="submit-success hidden">
-              ✓ Brew logged — thank you!<br>
-              <a href="#" onclick="onBackClick(event)">Get another recommendation →</a>
-            </div>
+                          ✅ Brew logged successfully! Your data helps the community consensus.
+                          <br>
+                          <a href="#" onclick="onBackClick(event)">Get another recommendation →</a>
+                        </div>
 
           </div>
           <!-- /faceB -->
@@ -996,39 +1106,41 @@
   <section id="how-it-works">
     <div class="container">
       <span class="section-label">Under the hood</span>
-      <h2>Community consensus, not machine guessing</h2>
+            <h2>Community consensus, not machine guessing</h2>
 
-      <div class="steps-list">
-        <div class="how-step">
-          <div class="how-step-content">
-            <h3>Real people log real brews</h3>
-            <p>Every logged brew — origin, method, grind, temp, ratio, and a rating — goes into
-               the community knowledge base. Roaster guides and specialty coffee sources seed the baseline.</p>
-          </div>
-        </div>
-        <div class="how-step">
-          <div class="how-step-content">
-            <h3>Consensus over averages</h3>
-            <p>When you ask for a recommendation, Brew Guide computes a weighted consensus
-               across matching brews — favouring higher-rated, field-confident entries.
-               Confidence tiers (high / medium / low) tell you how much data exists.</p>
-          </div>
-        </div>
-        <div class="how-step">
-          <div class="how-step-content">
-            <h3>Technique from the method</h3>
-            <p>Every brewing method ships with method-scoped technique data: bloom timing, pour stages,
-               preinfusion, steep parameters. The AI surfaces what's relevant to your cup.</p>
-          </div>
-        </div>
-        <div class="how-step">
-          <div class="how-step-content">
-            <h3>Any AI can ask</h3>
-            <p>Everything is exposed over the Model Context Protocol. Claude, Cursor, Hermes — any
-               MCP-capable agent can query Brew Guide mid-conversation, no config beyond one URL.</p>
-          </div>
-        </div>
-      </div>
+            <div class="steps-list">
+              <div class="how-step">
+                <div class="how-step-content">
+                  <h3>People log their brews</h3>
+                  <p>Every logged brew — origin, roast, method, grind, temp, ratio, and rating —
+                     goes into the community knowledge base.</p>
+                </div>
+              </div>
+              <div class="how-step">
+                <div class="how-step-content">
+                  <h3>Weighted consensus scoring</h3>
+                  <p>When you ask for a recommendation, Brew Guide matches your origin, roast,
+                     and method against logged data — favouring higher-rated entries.
+                     Confidence tiers (high / medium / low) tell you how much data backs the result.</p>
+                </div>
+              </div>
+              <div class="how-step">
+                <div class="how-step-content">
+                  <h3>Method-specific technique</h3>
+                  <p>Each of 8 brewing methods has its own technique schema: bloom timing,
+                     pour stages, steep times, agitation. The relevant technique surfaces with
+                     your recommendation.</p>
+                </div>
+              </div>
+              <div class="how-step">
+                <div class="how-step-content">
+                  <h3>MCP endpoint for any AI</h3>
+                  <p>Everything is exposed over the Model Context Protocol. Claude, Cursor,
+                     Hermes — any MCP-capable agent can query Brew Guide mid-conversation,
+                     no config beyond one URL.</p>
+                </div>
+              </div>
+            </div>
     </div>
   </section>
 
@@ -1062,10 +1174,10 @@
           <div class="code-block">"brew-guide": {<br>&nbsp;&nbsp;"type": "http",<br>&nbsp;&nbsp;"url": "https://brew-guide-<br>&nbsp;&nbsp;production.up.railway.app/mcp"<br>}</div>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- ── What's coming ─────────────────────────────────────── -->
+            <div class="scroll-hint">👆 Swipe for more →</div>
+          </div>
+        </section>
   <section id="whats-coming">
     <div class="container">
       <span class="section-label">On the horizon</span>
@@ -1127,9 +1239,35 @@
     const API = window.location.origin.startsWith('http') ? '' : 'http://localhost:4000';
 
     // ── State ──────────────────────────────────────────────────
-    window._origins = [];
-    window._methodMap = {};
-    let _selectedRating = 0;
+        window._origins = [];
+        window._originMap = {}; // displayName -> {name, variety}
+        window._methodMap = {};
+        let _selectedRating = 0;
+            let _voteState = null; // null, 'up', or 'down'
+
+        // Parse origin text for variety: "Papua New Guinea (bourbon)" → {origin, variety}
+        function parseOriginVariety(text) {
+          const match = text.match(/^(.+?)\s*\(([^)]+)\)$/);
+          if (match) {
+            return { origin: match[1].trim(), variety: match[2].trim() };
+          }
+          return { origin: text.trim(), variety: null };
+        }
+
+        // Build display name from origin data: "Ethiopia Yirgacheffe" or "Vietnam (robusta)"
+        function buildOriginDisplay(o) {
+          let display = o.name;
+          if (o.subregion) {
+            const first = o.subregion.split(',')[0].trim();
+            if (first && first !== o.name) {
+              display = o.name + ' ' + first;
+            }
+          }
+          if (o.variety) {
+            display = display + ' (' + o.variety + ')';
+          }
+          return display;
+        }
 
     // ── Combobox factory ────────────────────────────────────────
     function initCombobox(inputId, dropdownId) {
@@ -1137,46 +1275,53 @@
       const dropdown = document.getElementById(dropdownId);
 
       function renderDropdown(filterText) {
-        const lc = filterText.toLowerCase();
-        const filtered = filterText
-          ? window._origins.filter(o => o.name.toLowerCase().includes(lc))
-          : window._origins;
+              const lc = filterText.toLowerCase();
+              const filtered = filterText
+                ? window._origins.filter(o => o.displayName.toLowerCase().includes(lc))
+                : window._origins;
 
-        dropdown.innerHTML = '';
+              dropdown.innerHTML = '';
 
-        filtered.forEach(o => {
-          const item = document.createElement('div');
-          item.className = 'combobox-item';
-          item.textContent = o.name;
-          item.addEventListener('mousedown', e => {
-            e.preventDefault();
-            input.value = o.name;
-            dropdown.classList.add('hidden');
-          });
-          dropdown.appendChild(item);
-        });
+              filtered.forEach(o => {
+                const item = document.createElement('div');
+                item.className = 'combobox-item';
+                item.textContent = o.displayName;
+                item.addEventListener('mousedown', e => {
+                                  e.preventDefault();
+                                  input.value = o.displayName;
+                                  // Store variety from known origin on input element
+                                  const mapped = window._originMap[o.displayName];
+                                  input.dataset.variety = mapped ? mapped.variety || '' : '';
+                                  dropdown.classList.add('hidden');
+                                });
+                dropdown.appendChild(item);
+              });
 
-        if (filterText.length > 0 && filtered.length === 0) {
-          const newItem = document.createElement('div');
-          newItem.className = 'combobox-item combobox-item-new';
-          newItem.textContent = `Use "${filterText}" as a new origin`;
-          newItem.addEventListener('mousedown', e => {
-            e.preventDefault();
-            dropdown.classList.add('hidden');
-          });
-          dropdown.appendChild(newItem);
-        }
+              if (filterText.length > 0 && filtered.length === 0) {
+                              const newItem = document.createElement('div');
+                              newItem.className = 'combobox-item combobox-item-new';
+                              newItem.textContent = `Use "${filterText}" as a new origin`;
+                              newItem.addEventListener('mousedown', e => {
+                                e.preventDefault();
+                                // Parse variety from typed text: "Papua New Guinea (bourbon)"
+                                const parsed = parseOriginVariety(filterText);
+                                input.value = parsed.origin;
+                                input.dataset.variety = parsed.variety || '';
+                                dropdown.classList.add('hidden');
+                              });
+                              dropdown.appendChild(newItem);
+                            }
 
-        if (dropdown.children.length > 0) {
-          dropdown.classList.remove('hidden');
-        } else {
-          dropdown.classList.add('hidden');
-        }
-      }
+              if (dropdown.children.length > 0) {
+                dropdown.classList.remove('hidden');
+              } else {
+                dropdown.classList.add('hidden');
+              }
+            }
 
-      input.addEventListener('focus', () => renderDropdown(input.value));
-      input.addEventListener('input', () => renderDropdown(input.value));
-      input.addEventListener('blur',  () => setTimeout(() => dropdown.classList.add('hidden'), 150));
+      input.addEventListener('focus', () => { input.dataset.variety = ''; renderDropdown(input.value); });
+                  input.addEventListener('input', () => { input.dataset.variety = ''; renderDropdown(input.value); });
+                  input.addEventListener('blur',  () => setTimeout(() => dropdown.classList.add('hidden'), 150));
     }
 
     // ── Bootstrap: load origins + methods ──────────────────────
@@ -1187,15 +1332,29 @@
       ]);
 
       // Origins
-      if (originsRes.status === 'fulfilled' && originsRes.value.ok) {
-        window._origins = await originsRes.value.json();
-      } else {
-        window._origins = [
-          'Ethiopia','Colombia','Kenya','Brazil','Guatemala','Indonesia',
-          'Costa Rica','Honduras','Peru','Rwanda','Burundi','Panama','Jamaica',
-          'Yemen','Vietnam','India','Mexico','El Salvador','Bolivia','Tanzania'
-        ].map(name => ({ name }));
-      }
+            if (originsRes.status === 'fulfilled' && originsRes.value.ok) {
+              const rawOrigins = await originsRes.value.json();
+              window._origins = rawOrigins.map(o => ({
+                ...o,
+                displayName: buildOriginDisplay(o)
+              }));
+              // Build lookup map: displayName -> {name, variety}
+              window._origins.forEach(o => {
+                window._originMap[o.displayName] = { name: o.name, variety: o.variety || null };
+              });
+            } else {
+              const fallbackNames = [
+                'Ethiopia Yirgacheffe','Colombia Huila','Kenya Nyeri','Brazil Minas Gerais',
+                'Guatemala Antigua','Indonesia Sumatra','Costa Rica Tarrazú','Honduras Copán',
+                'Peru Cajamarca','Rwanda Nyamasheke','Burundi Kayanza','Panama Boquete',
+                'Jamaica','Yemen Mocha','Vietnam','India Karnataka','Mexico Chiapas',
+                'El Salvador Santa Ana','Bolivia','Tanzania Kilimanjaro'
+              ];
+              window._origins = fallbackNames.map(name => ({ displayName: name }));
+              fallbackNames.forEach(name => {
+                window._originMap[name] = { name, variety: null };
+              });
+            }
 
       initCombobox('originInputA', 'originDropdownA');
       initCombobox('originInputB', 'originDropdownB');
@@ -1247,16 +1406,20 @@
 
     // ── Slide transitions ───────────────────────────────────────
     function onShareClick(e) {
-      e.preventDefault();
-      // Pre-fill Face B from Face A selection
-      document.getElementById('originInputB').value = document.getElementById('originInputA').value;
-      document.getElementById('roastB').value        = document.getElementById('roastA').value;
-      document.getElementById('methodB').value       = document.getElementById('methodA').value;
+              e.preventDefault();
+              // Pre-fill Face B from Face A selection
+              const originA = document.getElementById('originInputA').value;
+              const originInputB = document.getElementById('originInputB');
+              originInputB.value = originA;
+              // Copy variety from Face A origin selection
+              originInputB.dataset.variety = document.getElementById('originInputA').dataset.variety || '';
+              document.getElementById('roastB').value        = document.getElementById('roastA').value;
+              document.getElementById('methodB').value       = document.getElementById('methodA').value;
 
-      const wrapper = document.getElementById('slideWrapper');
-      wrapper.style.height = document.getElementById('faceB').offsetHeight + 'px';
-      wrapper.classList.add('show-b');
-    }
+              const wrapper = document.getElementById('slideWrapper');
+              wrapper.style.height = document.getElementById('faceB').offsetHeight + 'px';
+              wrapper.classList.add('show-b');
+            }
 
     function onBackClick(e) {
       e.preventDefault();
@@ -1402,36 +1565,45 @@
 
     // ── Recommendation handler ──────────────────────────────────
     async function getRecommendation() {
-      const origin = document.getElementById('originInputA').value.trim();
-      const roast  = document.getElementById('roastA').value;
-      const method = document.getElementById('methodA').value;
+          const origin = document.getElementById('originInputA').value.trim();
+          const roast  = document.getElementById('roastA').value;
+          const method = document.getElementById('methodA').value;
 
-      if (!origin || !roast || !method) {
-        showError('Please select an origin, roast level, and brewing method.');
-        return;
-      }
+          if (!origin || !roast || !method) {
+            showError('Please select an origin, roast level, and brewing method.');
+            return;
+          }
 
-      const btn = document.getElementById('submitBtn');
-      btn.disabled = true;
-      btn.textContent = 'Fetching…';
+          // Parse variety from origin text if not already set by combobox selection
+                    const inputA = document.getElementById('originInputA');
+                    const parsed = parseOriginVariety(origin);
+                    const variety = inputA.dataset.variety || parsed.variety || null;
+                    const cleanOrigin = parsed.origin;
 
-      hide('errorState');
-      hide('resultCard');
-      show('loadingState');
-      updateSliderHeight();
+          const btn = document.getElementById('submitBtn');
+          btn.disabled = true;
+          btn.textContent = 'Fetching…';
 
-      const start = Date.now();
+          hide('errorState');
+          hide('resultCard');
+          document.getElementById('voteButtons').style.display = 'none';
+          show('loadingState');
+          updateSliderHeight();
 
-      try {
-        const res = await fetch(`${API}/recommend`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            origin,
+          const start = Date.now();
+          const body = {
+            origin: cleanOrigin,
             roast_level: roast,
             brewing_method_id: parseInt(method)
-          })
-        });
+          };
+          if (variety) body.variety = variety;
+
+          try {
+            const res = await fetch(`${API}/recommend`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body)
+            });
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
@@ -1501,7 +1673,9 @@
         `<strong>${dp != null ? dp : '?'}</strong> community brew${dp !== 1 ? 's' : ''} informed this recommendation.`;
 
       show('resultCard');
-      updateSliderHeight();
+            document.getElementById('voteButtons').style.display = 'flex';
+            resetVote();
+            updateSliderHeight();
 
       if (window.innerWidth < 600) {
         document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1509,74 +1683,98 @@
     }
 
     // ── Submit brew (Face B) ────────────────────────────────────
-    async function submitBrew() {
-      const origin   = document.getElementById('originInputB').value.trim();
-      const roast    = document.getElementById('roastB').value;
-      const method   = document.getElementById('methodB').value;
-      const grind    = document.getElementById('grindB').value;
-      const tempRaw  = document.getElementById('tempB').value;
-      const ratioRaw = document.getElementById('ratioB').value;
-      const timeRaw  = document.getElementById('timeB').value;
-      const notes    = document.getElementById('notesB').value.trim();
+        async function submitBrew() {
+          const origin   = document.getElementById('originInputB').value.trim();
+          const roast    = document.getElementById('roastB').value;
+          const method   = document.getElementById('methodB').value;
+          const grind    = document.getElementById('grindB').value;
+          const tempRaw  = document.getElementById('tempB').value;
+          const ratioRaw = document.getElementById('ratioB').value;
+          const timeRaw  = document.getElementById('timeB').value;
+          const notes    = document.getElementById('notesB').value.trim();
 
-      if (!origin || !roast || !method) {
-        showSubmitError('Origin, roast level, and brewing method are required.');
-        return;
-      }
+          if (!origin || !roast || !method) {
+            showSubmitError('Origin, roast level, and brewing method are required.');
+            return;
+          }
 
-      // Validate required fields (Zod schema requires these)
-      if (!grind || !tempRaw || !ratioRaw || !timeRaw || _selectedRating <= 0) {
-        showSubmitError('All fields are required — please fill in grind, temp, ratio, time, and rating.');
-        return;
-      }
+          // Validate required fields (Zod schema requires these)
+          if (!grind || !tempRaw || !ratioRaw || !timeRaw || _selectedRating <= 0) {
+            showSubmitError('All fields are required — please fill in grind, temp, ratio, time, and rating.');
+            return;
+          }
 
-      const btn = document.getElementById('submitBrewBtn');
-      btn.disabled = true;
-      btn.textContent = 'Submitting…';
+          const btn = document.getElementById('submitBrewBtn');
+          btn.disabled = true;
+          btn.textContent = 'Submitting…';
 
-      hide('submitErrorState');
-      hide('submitSuccessState');
-      show('submitLoadingState');
-      updateSliderHeight();
+          hide('submitErrorState');
+          hide('submitSuccessState');
+          show('submitLoadingState');
+          updateSliderHeight();
 
-      const body = {
-        origin,
-        roast_level: roast,
-        brewing_method_id: parseInt(method),
-        source: 'user_submitted'
-      };
+          const body = {
+                      origin,
+                      roast_level: roast,
+                      brewing_method_id: parseInt(method),
+                      source: 'user_submitted'
+                    };
 
-      if (grind)                 body.grind_size   = grind;
-      if (tempRaw)               body.water_temp_c = parseInt(tempRaw);
-      if (ratioRaw)              body.ratio        = 1 / parseFloat(ratioRaw);
-      if (timeRaw)               body.brew_time_s  = parseInt(timeRaw);
-      if (_selectedRating > 0)   body.rating       = _selectedRating;
-      if (notes)                 body.notes        = notes;
+                    // Include variety from selected origin or parsed from input
+                                        const inputB = document.getElementById('originInputB');
+                                        const parsedB = parseOriginVariety(origin);
+                                        const variety = inputB.dataset.variety || parsedB.variety || null;
+                                        if (variety) body.variety = variety;
 
-      try {
-        const res = await fetch(`${API}/brews`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
+          if (grind)                 body.grind_size   = grind;
+          if (tempRaw)               body.water_temp_c = parseInt(tempRaw);
+          if (ratioRaw)              body.ratio        = 1 / parseFloat(ratioRaw);
+          if (timeRaw)               body.brew_time_s  = parseInt(timeRaw);
+          if (_selectedRating > 0)   body.rating       = _selectedRating;
+          if (notes)                 body.notes        = notes;
 
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || err.message || `API error ${res.status}`);
+          try {
+            const res = await fetch(`${API}/brews`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body)
+            });
+
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(err.error || err.message || `API error ${res.status}`);
+            }
+
+            hide('submitLoadingState');
+            show('submitSuccessState');
+
+            // Clear all form fields so user can submit another brew immediately
+            clearBrewForm();
+
+          } catch (err) {
+            hide('submitLoadingState');
+            showSubmitError(err.message || 'Something went wrong. Please try again.');
+          } finally {
+            btn.disabled = false;
+            btn.textContent = 'Submit brew';
+            updateSliderHeight();
+          }
         }
 
-        hide('submitLoadingState');
-        show('submitSuccessState');
-
-      } catch (err) {
-        hide('submitLoadingState');
-        showSubmitError(err.message || 'Something went wrong. Please try again.');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Submit brew';
-        updateSliderHeight();
-      }
-    }
+        function clearBrewForm() {
+                  const originB = document.getElementById('originInputB');
+                  originB.value = '';
+                  originB.dataset.variety = '';
+                  document.getElementById('roastB').value = '';
+                  document.getElementById('methodB').value = '';
+                  document.getElementById('grindB').value = '';
+                  document.getElementById('tempB').value = '';
+                  document.getElementById('ratioB').value = '';
+                  document.getElementById('timeB').value = '';
+                  document.getElementById('notesB').value = '';
+                  _selectedRating = 0;
+                  paintStars(0);
+                }
 
     // ── Helpers ─────────────────────────────────────────────────
     function show(id) { document.getElementById(id).classList.remove('hidden'); }
@@ -1593,10 +1791,40 @@
       el.classList.remove('hidden');
     }
     function showSubmitError(msg) {
-      const el = document.getElementById('submitErrorState');
-      el.textContent = msg;
-      el.classList.remove('hidden');
-    }
+          const el = document.getElementById('submitErrorState');
+          el.textContent = msg;
+          el.classList.remove('hidden');
+        }
+
+        // ── Vote handling ─────────────────────────────────────────
+        function onVote(vote) {
+          const upBtn   = document.getElementById('voteUpBtn');
+          const downBtn = document.getElementById('voteDownBtn');
+
+          if (_voteState === vote) {
+            // Toggle off
+            _voteState = null;
+            upBtn.classList.remove('selected-up');
+            downBtn.classList.remove('selected-down');
+          } else {
+            _voteState = vote;
+            if (vote === 'up') {
+              upBtn.classList.add('selected-up');
+              downBtn.classList.remove('selected-down');
+            } else {
+              downBtn.classList.add('selected-down');
+              upBtn.classList.remove('selected-up');
+            }
+          }
+        }
+
+        function resetVote() {
+          _voteState = null;
+          const upBtn   = document.getElementById('voteUpBtn');
+          const downBtn = document.getElementById('voteDownBtn');
+          upBtn.classList.remove('selected-up');
+          downBtn.classList.remove('selected-down');
+        }
 
     // ── Enter key on Face A inputs ──────────────────────────────
     ['roastA', 'methodA'].forEach(id => {
