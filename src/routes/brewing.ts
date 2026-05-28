@@ -50,6 +50,7 @@ app.get('/brews', async (c) => {
 const brewSchema = z.object({
   brewing_method_id: z.number(),
   origin: z.string(),
+  variety: z.string().optional(),
   roast_level: z.string(),
   grind_size: z.string(),
   water_temp_c: z.number(),
