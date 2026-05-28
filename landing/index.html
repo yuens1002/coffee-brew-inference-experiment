@@ -767,13 +767,12 @@
   <header class="hero">
     <div class="container">
       <span class="hero-eyebrow">☕ Community-Powered Brew Intelligence</span>
-      <h1>Every great cup starts with<br><em>the right question.</em></h1>
-      <p class="hero-desc">
-        Brew Guide turns your grinder, kettle, and bag of beans into a question
-        any AI can answer. <strong>Community consensus over thousands of real brews</strong> —
-        not generic averages. Ask how to brew your Ethiopian light roast.
-        Get specifics: bloom time, pour stages, temperature, ratio.
-      </p>
+      <h1>8 brewing methods.<br><em>Community consensus.</em><br>Technique guidance.</h1>
+            <p class="hero-desc">
+              Brew Guide gives you brew parameters backed by real community data.
+              Pick your origin, roast, and method — get temperature, ratio, grind,
+              time, and step-by-step technique specific to your cup.
+            </p>
       <a href="#demo" class="btn" style="display:inline-block;width:auto;padding:13px 32px;text-decoration:none;">
         Try the live demo →
       </a>
@@ -996,39 +995,41 @@
   <section id="how-it-works">
     <div class="container">
       <span class="section-label">Under the hood</span>
-      <h2>Community consensus, not machine guessing</h2>
+            <h2>Community consensus, not machine guessing</h2>
 
-      <div class="steps-list">
-        <div class="how-step">
-          <div class="how-step-content">
-            <h3>Real people log real brews</h3>
-            <p>Every logged brew — origin, method, grind, temp, ratio, and a rating — goes into
-               the community knowledge base. Roaster guides and specialty coffee sources seed the baseline.</p>
-          </div>
-        </div>
-        <div class="how-step">
-          <div class="how-step-content">
-            <h3>Consensus over averages</h3>
-            <p>When you ask for a recommendation, Brew Guide computes a weighted consensus
-               across matching brews — favouring higher-rated, field-confident entries.
-               Confidence tiers (high / medium / low) tell you how much data exists.</p>
-          </div>
-        </div>
-        <div class="how-step">
-          <div class="how-step-content">
-            <h3>Technique from the method</h3>
-            <p>Every brewing method ships with method-scoped technique data: bloom timing, pour stages,
-               preinfusion, steep parameters. The AI surfaces what's relevant to your cup.</p>
-          </div>
-        </div>
-        <div class="how-step">
-          <div class="how-step-content">
-            <h3>Any AI can ask</h3>
-            <p>Everything is exposed over the Model Context Protocol. Claude, Cursor, Hermes — any
-               MCP-capable agent can query Brew Guide mid-conversation, no config beyond one URL.</p>
-          </div>
-        </div>
-      </div>
+            <div class="steps-list">
+              <div class="how-step">
+                <div class="how-step-content">
+                  <h3>People log their brews</h3>
+                  <p>Every logged brew — origin, roast, method, grind, temp, ratio, and rating —
+                     goes into the community knowledge base.</p>
+                </div>
+              </div>
+              <div class="how-step">
+                <div class="how-step-content">
+                  <h3>Weighted consensus scoring</h3>
+                  <p>When you ask for a recommendation, Brew Guide matches your origin, roast,
+                     and method against logged data — favouring higher-rated entries.
+                     Confidence tiers (high / medium / low) tell you how much data backs the result.</p>
+                </div>
+              </div>
+              <div class="how-step">
+                <div class="how-step-content">
+                  <h3>Method-specific technique</h3>
+                  <p>Each of 8 brewing methods has its own technique schema: bloom timing,
+                     pour stages, steep times, agitation. The relevant technique surfaces with
+                     your recommendation.</p>
+                </div>
+              </div>
+              <div class="how-step">
+                <div class="how-step-content">
+                  <h3>MCP endpoint for any AI</h3>
+                  <p>Everything is exposed over the Model Context Protocol. Claude, Cursor,
+                     Hermes — any MCP-capable agent can query Brew Guide mid-conversation,
+                     no config beyond one URL.</p>
+                </div>
+              </div>
+            </div>
     </div>
   </section>
 
