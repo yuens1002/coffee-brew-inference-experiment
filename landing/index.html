@@ -46,11 +46,21 @@
     }
 
     /* ── Hero ───────────────────────────────────────────────── */
-    .hero {
-      padding: 80px 20px 60px;
-      text-align: center;
-      background: radial-gradient(ellipse 80% 60% at 50% 0%, #3a200a 0%, var(--bg) 70%);
-    }
+        .hero {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 80px 20px 60px;
+          text-align: center;
+          background: radial-gradient(ellipse 80% 60% at 50% 0%, #3a200a 0%, var(--bg) 70%);
+          animation: heroFadeIn 0.8s ease-out;
+        }
+
+        @keyframes heroFadeIn {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
 
     .hero-eyebrow {
       display: inline-block;
@@ -225,8 +235,9 @@
     }
 
     .btn:hover:not(:disabled) {
-      background: var(--gold);
-    }
+          background: var(--gold);
+          color: #110900;
+        }
 
     .btn:active:not(:disabled) {
       transform: scale(0.98);
@@ -774,8 +785,8 @@
               time, and step-by-step technique specific to your cup.
             </p>
       <a href="#demo" class="btn" style="display:inline-block;width:auto;padding:13px 32px;text-decoration:none;">
-        Try the live demo →
-      </a>
+              Try the live demo ↓
+            </a>
     </div>
   </header>
 
@@ -826,6 +837,11 @@
               Get recommendation
             </button>
 
+            <!-- Share CTA -->
+            <div class="share-cta" id="shareCta">
+              Already brewed? <a href="#" onclick="onShareClick(event)">Share your results →</a>
+            </div>
+
             <!-- Loading state -->
             <div id="loadingState" class="loading-state hidden">
               <div class="spinner"></div>
@@ -875,13 +891,9 @@
               </div>
 
               <!-- Data points -->
-              <div class="data-points" id="resDataPoints"></div>
+                            <div class="data-points" id="resDataPoints"></div>
 
-              <!-- Share CTA -->
-              <div class="share-cta">
-                Already brewed? <a href="#" onclick="onShareClick(event)">Share your results →</a>
-              </div>
-            </div>
+                          </div>
 
           </div>
           <!-- /faceA -->
