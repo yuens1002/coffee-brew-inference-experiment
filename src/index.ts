@@ -36,14 +36,14 @@ try {
 
 // Favicon
 try {
-  const faviconBuffer = readFileSync(join(projectRoot, 'favicon.ico'));
+  const faviconBuffer = readFileSync(join(projectRoot, 'landing', 'favicon.ico'));
   app.get('/favicon.ico', (c) => {
     c.header('Content-Type', 'image/x-icon');
     c.header('Cache-Control', 'public, max-age=86400');
     return c.body(faviconBuffer);
   });
-} catch {
-  // favicon not critical — silently skip
+} catch (err) {
+  console.error('Failed to load favicon.ico:', err);
 }
 
 // Mount brewing API routes

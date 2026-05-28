@@ -44,7 +44,7 @@ a coffee-forward landing page, and a polished DEV.to submission post.
 | D4 | `compare_brew` match_score wired from `brew_recommendation_links` | `/backend-architect` | `src/routes/brewing.ts`, `src/lib/db.ts` |
 | D5 | Deploy + run scraper on production DB | `/devops` | Railway env, one-time script run |
 | D6 | Landing page | `/frontend` | `landing/index.html` |
-| D7 | DEV.to submission post | `/pm` | `docs/competition-entry.md` (draft) |
+| D7 | DEV.to submission post | `/pm` | `.claude/competition-entry.md` (moved out of public docs post-sprint) |
 
 ---
 
@@ -408,7 +408,7 @@ Roast level: Light / Medium / Medium-Dark / Dark (static)
 DEV.to "Build With Hermes Agent" template. Published as a DEV.to post — the
 article IS the submission.
 
-Draft lives at `docs/competition-entry.md` before publishing.
+Draft lives at `.claude/competition-entry.md` (moved out of public docs post-sprint).
 
 ### Judging criteria to address
 
