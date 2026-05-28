@@ -16,6 +16,7 @@ export interface Origin {
   name: string;
   region: string;
   subregion?: string;
+  variety?: string;
   aliases?: string;       // comma-separated misspellings: "Ethiopean,Ethopian"
   is_verified: boolean;
 }
@@ -58,6 +59,7 @@ export interface Brew {
 export interface RecommendationParams {
   brewing_method_id?: number;
   origin?: string;
+  variety?: string;
   roast_level?: string;
   grind_size?: string;
   water_temp_c?: number;
@@ -68,6 +70,7 @@ export interface RecommendationParams {
 /** Brew input fields echoed back in the recommendation response */
 export interface BrewInput {
   origin: string;
+  variety?: string;
   roast_level: string;
   grind_size: string;
   water_temp_c: number;
@@ -91,6 +94,8 @@ export interface Recommendation {
   sources: SourceRef[];
   data_points_used: number;
   technique?: BrewTechnique | null;
+  thumbs_up?: number;
+  thumbs_down?: number;
 }
 
 /** Stored recommendation record (prediction log) */
@@ -116,6 +121,7 @@ export interface BrewRecommendationLink {
   brew_id: number;
   recommendation_id: number;
   match_confidence: number;
+  user_vote?: 'up' | 'down' | null;
   linked_at: string;
 }
 

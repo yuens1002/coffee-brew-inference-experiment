@@ -12,6 +12,7 @@ model Origin {
   name        String  @unique
   region      String
   subregion   String?
+  variety     String?
   aliases     String?
   is_verified Boolean @default(true)
 
@@ -46,7 +47,7 @@ model Brew {
   notes                String?
   created_at           DateTime                 @default(now()) @db.Timestamptz(3)
   source               String                   @default("user_submitted")
-  source_url           String?
+  source_url           String?                  @unique
   field_confidence     String?
   brewing_method       BrewingMethod            @relation(fields: [brewing_method_id], references: [id])
   recommendation_links BrewRecommendationLink[]
@@ -79,6 +80,7 @@ model BrewRecommendationLink {
   brew_id           Int
   recommendation_id Int
   match_confidence  Float
+  user_vote         String?
   linked_at         DateTime       @default(now()) @db.Timestamptz(3)
   brew              Brew           @relation(fields: [brew_id], references: [id])
   recommendation    Recommendation @relation(fields: [recommendation_id], references: [id])
