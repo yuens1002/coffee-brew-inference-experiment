@@ -57,9 +57,21 @@
           animation: heroFadeIn 0.8s ease-out;
         }
 
+        .hero .container {
+          max-width: 680px;
+        }
+
         @keyframes heroFadeIn {
           from { opacity: 0; transform: translateY(12px); }
           to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes arrowBounce {
+          0%, 100% { transform: translateY(0); }
+          60%      { transform: translateY(3px); }
+        }
+        @keyframes arrowSlide {
+          0%, 100% { transform: translateX(0); }
+          60%      { transform: translateX(3px); }
         }
 
     .hero-eyebrow {
@@ -248,6 +260,22 @@
       cursor: not-allowed;
     }
 
+    .btn-arrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-arrow .arrow-down {
+      flex-shrink: 0;
+      animation: arrowBounce 1.6s ease-in-out infinite;
+    }
+
+    .btn-arrow .arrow-right {
+      flex-shrink: 0;
+      animation: arrowSlide 1.6s ease-in-out infinite;
+    }
+
     /* ── Loading ────────────────────────────────────────────── */
     .loading-state {
       display: flex;
@@ -378,6 +406,8 @@
 
     .technique-steps {
       list-style: none;
+      margin: 0;
+      padding: 0;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -414,9 +444,6 @@
     .vote-buttons {
       display: flex;
       gap: 8px;
-      margin-top: 16px;
-      border-top: 1px solid var(--border);
-      padding-top: 16px;
       align-items: center;
     }
 
@@ -465,9 +492,6 @@
     .data-points {
       font-size: 13px;
       color: var(--muted);
-      border-top: 1px solid var(--border);
-      padding-top: 16px;
-      margin-top: 16px;
     }
 
     .data-points strong {
@@ -579,43 +603,67 @@
 
     .star:hover { transform: scale(1.15); }
 
-    /* ── Share CTA ──────────────────────────────────────────── */
-    .share-cta {
-      margin-top: 20px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
+    /* ── Required indicator ─────────────────────────────────── */
+    .req { color: var(--amber); font-size: 12px; margin-left: 2px; }
+
+    /* ── Field-level validation errors ──────────────────────── */
+    .field-error {
+      font-size: 12px;
+      color: #e05252;
+      margin-top: 4px;
+      min-height: 16px;
+    }
+    input.input-error, select.input-error {
+      border-color: #e05252 !important;
+    }
+
+    /* ── Data points + vote row ──────────────────────────────── */
+    .data-points-row {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 0;
+    }
+
+    /* ── Community contribution CTA ──────────────────────────── */
+    .community-contrib-cta {
+      margin-top: 24px;
+      padding: 24px 28px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      text-align: center;
+    }
+    .contrib-heading {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--cream);
+      margin: 0 0 10px;
+    }
+    .contrib-desc {
       font-size: 14px;
       color: var(--muted);
-      text-align: center;
-    }
-
-    .log-brew-link {
-      font-size: 14px;
-      color: var(--gold);
-      text-decoration: none;
-      border-bottom: 1px solid transparent;
-      transition: border-color 0.15s;
-    }
-    .log-brew-link:hover { border-bottom-color: var(--gold); }
-
-    /* ── Submit success ─────────────────────────────────────── */
-    .submit-success {
-      margin-top: 20px;
-      padding: 16px 20px;
-      background: rgba(76, 175, 112, 0.1);
-      border: 1px solid rgba(76, 175, 112, 0.3);
-      border-radius: var(--radius);
-      color: #4caf70;
-      font-size: 14px;
-      text-align: center;
+      margin: 0 0 20px;
       line-height: 1.7;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
     }
-
-    .submit-success a {
-      color: #4caf70;
-      display: block;
-      margin-top: 8px;
+    .contrib-btn {
+      width: auto;
+      padding: 12px 28px;
     }
+    .already-brewed-link {
+      text-align: center;
+      padding: 16px 0 4px;
+    }
+    .already-brewed-link a {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+    }
+    .already-brewed-link a:hover { color: var(--amber); }
 
     /* ── How it works ───────────────────────────────────────── */
     #how-it-works {
@@ -880,10 +928,10 @@
       <span class="hero-eyebrow">☕ Community-Powered Brew Intelligence</span>
       <h1>Every great cup starts with the right question.</h1>
             <p class="hero-desc">
-              Brew Guide turns your grinder, kettle, and bag of beans into a question any AI can answer. <strong>Community consensus over thousands of real brews</strong> — not generic averages. Ask how to brew your Ethiopian light roast. Get specifics: bloom time, pour stages, temperature, ratio.
+              Ever wonder how to make the best cup with what you have? Tell Brew Guide your origin, roast, and method — get the grind, temp, ratio, and timing from real community brews, plus step-by-step technique.
             </p>
-      <a href="#demo" class="btn" style="display:inline-block;width:auto;padding:13px 32px;text-decoration:none;">
-              Try the live demo ↓
+      <a href="#demo" class="btn btn-arrow" style="width:auto;padding:13px 32px;text-decoration:none;">
+              Try the live demo <span class="arrow-down"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.5 1v11M1.5 7l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
             </a>
     </div>
   </header>
@@ -894,8 +942,8 @@
       <span class="section-label">Live demo — no login required</span>
       <h2>How should I brew this?</h2>
       <p class="demo-intro">
-        Pick your coffee and method. We'll pull real community brew data and
-        surface the parameters that actually work — including step-by-step technique.
+        Pick your origin, roast by sight, and brew method — get community-dialed grind, temp, and timing
+        with step-by-step instructions for the best cup.
       </p>
 
       <div class="demo-card">
@@ -906,39 +954,38 @@
 
             <div class="form-row">
               <div class="field">
-                <label for="originInputA">Coffee origin</label>
+                <label for="originInputA">Coffee origin <span class="req">*</span></label>
                 <div class="combobox-wrap">
                   <input type="text" id="originInputA" placeholder="Select or type an origin…" autocomplete="off">
                   <div id="originDropdownA" class="combobox-dropdown hidden"></div>
                 </div>
+                <div class="field-error" id="originAError"></div>
               </div>
               <div class="field">
-                <label for="roastA">Roast level</label>
-                <select id="roastA" required>
+                <label for="roastA">Roast level <span class="req">*</span></label>
+                <select id="roastA">
                   <option value="">Select roast</option>
                   <option value="light">Light</option>
                   <option value="medium">Medium</option>
                   <option value="medium-dark">Medium-Dark</option>
                   <option value="dark">Dark</option>
                 </select>
+                <div class="field-error" id="roastAError"></div>
               </div>
             </div>
 
             <div class="field">
-              <label for="methodA">Brewing method</label>
-              <select id="methodA" required>
+              <label for="methodA">Brewing method <span class="req">*</span></label>
+              <select id="methodA">
                 <option value="">Loading methods…</option>
               </select>
+              <div class="field-error" id="methodAError"></div>
             </div>
 
             <button class="btn" id="submitBtn" onclick="getRecommendation()">
               Get recommendation
             </button>
 
-            <!-- Share CTA -->
-            <div class="share-cta" id="shareCta">
-              Already brewed? <a href="#" onclick="onShareClick(event)">Share your results →</a>
-            </div>
 
             <!-- Loading state -->
             <div id="loadingState" class="loading-state hidden">
@@ -988,22 +1035,29 @@
                 <ol class="technique-steps" id="techniqueSteps"></ol>
               </div>
 
-              <!-- Data points -->
-                            <div class="data-points" id="resDataPoints"></div>
-
-                            <!-- Vote buttons -->
-                            <div class="vote-buttons" id="voteButtons" style="display:none;">
-                              <span class="vote-label">Helpful?</span>
-                              <button class="vote-btn" id="voteUpBtn" onclick="onVote('up')" title="This recommendation helped">👍 <span id="voteUpCount">0</span></button>
-                              <button class="vote-btn" id="voteDownBtn" onclick="onVote('down')" title="This recommendation missed the mark">👎 <span id="voteDownCount">0</span></button>
-                            </div>
-
-                            <!-- Log brew CTA — shown after recommendation -->
-                            <div id="logBrewCta" style="display:none; margin-top:16px; text-align:center;">
-                              <a href="#" class="log-brew-link" onclick="onShareClick(event)">Brewed it? Log how it went →</a>
+              <!-- Data points + vote -->
+                            <div class="data-points-row">
+                              <div class="data-points" id="resDataPoints"></div>
+                              <div class="vote-buttons" id="voteButtons" style="display:none;">
+                                <span class="vote-label">Helpful?</span>
+                                <button class="vote-btn" id="voteUpBtn" onclick="onVote('up')" title="These steps helped">👍 <span id="voteUpCount">0</span></button>
+                                <button class="vote-btn" id="voteDownBtn" onclick="onVote('down')" title="These steps missed the mark">👎 <span id="voteDownCount">0</span></button>
+                              </div>
                             </div>
 
                           </div>
+
+          <!-- Community contribution CTA — shown under card after recommendation loads -->
+          <div id="communityContribCta" class="community-contrib-cta hidden">
+            <h3 class="contrib-heading">Brewed it? Share what you tasted.</h3>
+            <p class="contrib-desc">Log your grind, temp, and how it landed in the cup — your notes sharpen the recommendation for whoever brews next.</p>
+            <button class="btn btn-arrow contrib-btn" onclick="onShareClick(event)">Log my brew <span class="arrow-right"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 6.5h11M7 1.5l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+          </div>
+
+          <!-- Already brewed shortcut — visible in empty state, hides on get recommendation -->
+          <div id="alreadyBrewedLink" class="already-brewed-link">
+            <a href="#" onclick="onShareClick(event)">Brewed it already? Log your notes →</a>
+          </div>
 
           </div>
           <!-- /faceA -->
@@ -1099,11 +1153,7 @@
 
             <div id="submitErrorState" class="error-state hidden"></div>
 
-            <div id="submitSuccessState" class="submit-success hidden">
-                          ✅ Brew logged successfully! Your data helps the community consensus.
-                          <br>
-                          <a href="#" onclick="onBackClick(event)">Get another recommendation →</a>
-                        </div>
+            <div id="submitSuccessState" class="hidden"></div>
 
           </div>
           <!-- /faceB -->
@@ -1118,7 +1168,7 @@
   <section id="how-it-works">
     <div class="container">
       <span class="section-label">Under the hood</span>
-            <h2>Community consensus, not machine guessing</h2>
+            <h2>Community consensus</h2>
 
             <div class="steps-list">
               <div class="how-step">
@@ -1433,6 +1483,7 @@
                 if (rec.brew_time_s)  document.getElementById('timeB').value  = rec.brew_time_s;
               }
 
+              hide('submitErrorState');
               const wrapper = document.getElementById('slideWrapper');
               wrapper.style.height = document.getElementById('faceB').offsetHeight + 'px';
               wrapper.classList.add('show-b');
@@ -1581,21 +1632,34 @@
     }
 
     // ── Recommendation handler ──────────────────────────────────
+    function setFieldError(id, msg) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = msg;
+    }
+    function clearFieldErrors() {
+      ['originAError','roastAError','methodAError'].forEach(id => setFieldError(id, ''));
+      ['originInputA'].forEach(id => document.getElementById(id)?.classList.remove('input-error'));
+      ['roastA','methodA'].forEach(id => document.getElementById(id)?.classList.remove('input-error'));
+    }
+
     async function getRecommendation() {
           const origin = document.getElementById('originInputA').value.trim();
           const roast  = document.getElementById('roastA').value;
           const method = document.getElementById('methodA').value;
 
-          if (!origin || !roast || !method) {
-            showError('Please select an origin, roast level, and brewing method.');
-            return;
-          }
+          clearFieldErrors();
+          let hasError = false;
+          if (!origin) { setFieldError('originAError', 'Please enter your coffee origin.'); document.getElementById('originInputA').classList.add('input-error'); hasError = true; }
+          if (!roast)  { setFieldError('roastAError',  'Please select a roast level.');     document.getElementById('roastA').classList.add('input-error');       hasError = true; }
+          if (!method) { setFieldError('methodAError', 'Please select a brewing method.');  document.getElementById('methodA').classList.add('input-error');      hasError = true; }
+          if (hasError) return;
 
           // Use canonical origin name from combobox selection; fall back to parsing typed text
-                    const inputA = document.getElementById('originInputA');
-                    const parsed = parseOriginVariety(origin);
-                    const variety = inputA.dataset.variety || parsed.variety || null;
-                    const cleanOrigin = inputA.dataset.originName || parsed.origin;
+          const inputA = document.getElementById('originInputA');
+          const parsed = parseOriginVariety(origin);
+          const variety = inputA.dataset.variety || parsed.variety || null;
+          const cleanOrigin = inputA.dataset.originName || parsed.origin;
 
           const btn = document.getElementById('submitBtn');
           btn.disabled = true;
@@ -1603,8 +1667,9 @@
 
           hide('errorState');
           hide('resultCard');
+          hide('communityContribCta');
+          hide('alreadyBrewedLink');
           document.getElementById('voteButtons').style.display = 'none';
-          document.getElementById('logBrewCta').style.display = 'none';
           show('loadingState');
           updateSliderHeight();
 
@@ -1695,10 +1760,10 @@
       document.getElementById('voteUpCount').textContent = data.thumbs_up ?? 0;
       document.getElementById('voteDownCount').textContent = data.thumbs_down ?? 0;
       show('resultCard');
-            document.getElementById('voteButtons').style.display = 'flex';
-            document.getElementById('logBrewCta').style.display = 'block';
-            resetVote();
-            updateSliderHeight();
+      document.getElementById('voteButtons').style.display = 'flex';
+      show('communityContribCta');
+      resetVote();
+      updateSliderHeight();
 
       if (window.innerWidth < 600) {
         document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1770,10 +1835,8 @@
             }
 
             hide('submitLoadingState');
-            show('submitSuccessState');
-
-            // Clear all form fields so user can submit another brew immediately
             clearBrewForm();
+            launchConfetti();
 
           } catch (err) {
             hide('submitLoadingState');
@@ -1783,6 +1846,53 @@
             btn.textContent = 'Submit brew';
             updateSliderHeight();
           }
+        }
+
+        function launchConfetti() {
+          const overlay = document.getElementById('confettiOverlay');
+          const canvas  = document.getElementById('confettiCanvas');
+          overlay.style.display = 'flex';
+          canvas.width  = window.innerWidth;
+          canvas.height = window.innerHeight;
+          const ctx    = canvas.getContext('2d');
+          const colors = ['#f59e0b','#d97706','#b45309','#92400e','#e2c07a','#c8a96e','#f5deb3','#d4a853'];
+          const pieces = Array.from({length: 120}, () => ({
+            x:  Math.random() * canvas.width,
+            y: -20 - Math.random() * 120,
+            w:  6 + Math.random() * 9,
+            h:  3 + Math.random() * 5,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            rot: Math.random() * 360,
+            vx: (Math.random() - 0.5) * 3,
+            vy:  2 + Math.random() * 4,
+            vr: (Math.random() - 0.5) * 8,
+          }));
+          let raf;
+          const start = performance.now();
+          function tick(now) {
+            const elapsed = now - start;
+            const alpha   = elapsed > 1500 ? Math.max(0, 1 - (elapsed - 1500) / 500) : 1;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            pieces.forEach(p => {
+              ctx.save();
+              ctx.globalAlpha = alpha;
+              ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+              ctx.rotate(p.rot * Math.PI / 180);
+              ctx.fillStyle = p.color;
+              ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+              ctx.restore();
+              p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+            });
+            if (elapsed < 2000) {
+              raf = requestAnimationFrame(tick);
+            } else {
+              cancelAnimationFrame(raf);
+              overlay.style.display = 'none';
+              hide('communityContribCta');
+              onBackClick({ preventDefault: () => {} });
+            }
+          }
+          raf = requestAnimationFrame(tick);
         }
 
         function clearBrewForm() {
@@ -1875,5 +1985,14 @@
     // ── Boot ────────────────────────────────────────────────────
     bootstrap();
   </script>
+
+  <!-- Confetti overlay -->
+  <div id="confettiOverlay" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(10,6,0,0.75); align-items:center; justify-content:center; flex-direction:column;">
+    <canvas id="confettiCanvas" style="position:absolute; inset:0; width:100%; height:100%;"></canvas>
+    <div style="position:relative; z-index:1; text-align:center; pointer-events:none;">
+      <div style="font-size:52px; margin-bottom:12px;">🎉</div>
+      <div style="font-size:22px; font-weight:700; color:#fff; letter-spacing:0.02em; text-shadow:0 2px 12px rgba(0,0,0,0.5);">The community thanks you!</div>
+    </div>
+  </div>
 </body>
 </html>
