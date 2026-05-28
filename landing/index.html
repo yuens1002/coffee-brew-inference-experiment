@@ -1280,9 +1280,9 @@
                 item.addEventListener('mousedown', e => {
                                   e.preventDefault();
                                   input.value = o.displayName;
-                                  // Store variety from known origin on input element
                                   const mapped = window._originMap[o.displayName];
                                   input.dataset.variety = mapped ? mapped.variety || '' : '';
+                                  input.dataset.originName = mapped ? mapped.name : '';
                                   dropdown.classList.add('hidden');
                                 });
                 dropdown.appendChild(item);
@@ -1298,6 +1298,7 @@
                                 const parsed = parseOriginVariety(filterText);
                                 input.value = parsed.origin;
                                 input.dataset.variety = parsed.variety || '';
+                                input.dataset.originName = '';
                                 dropdown.classList.add('hidden');
                               });
                               dropdown.appendChild(newItem);
@@ -1310,8 +1311,8 @@
               }
             }
 
-      input.addEventListener('focus', () => { input.dataset.variety = ''; renderDropdown(input.value); });
-                  input.addEventListener('input', () => { input.dataset.variety = ''; renderDropdown(input.value); });
+      input.addEventListener('focus', () => { input.dataset.variety = ''; input.dataset.originName = ''; renderDropdown(input.value); });
+                  input.addEventListener('input', () => { input.dataset.variety = ''; input.dataset.originName = ''; renderDropdown(input.value); });
                   input.addEventListener('blur',  () => setTimeout(() => dropdown.classList.add('hidden'), 150));
     }
 
@@ -1402,8 +1403,9 @@
               const originA = document.getElementById('originInputA').value;
               const originInputB = document.getElementById('originInputB');
               originInputB.value = originA;
-              // Copy variety from Face A origin selection
-              originInputB.dataset.variety = document.getElementById('originInputA').dataset.variety || '';
+              // Copy variety and canonical name from Face A origin selection
+              originInputB.dataset.variety    = document.getElementById('originInputA').dataset.variety    || '';
+              originInputB.dataset.originName = document.getElementById('originInputA').dataset.originName || '';
               document.getElementById('roastB').value        = document.getElementById('roastA').value;
               document.getElementById('methodB').value       = document.getElementById('methodA').value;
 
@@ -1565,11 +1567,11 @@
             return;
           }
 
-          // Parse variety from origin text if not already set by combobox selection
+          // Use canonical origin name from combobox selection; fall back to parsing typed text
                     const inputA = document.getElementById('originInputA');
                     const parsed = parseOriginVariety(origin);
                     const variety = inputA.dataset.variety || parsed.variety || null;
-                    const cleanOrigin = parsed.origin;
+                    const cleanOrigin = inputA.dataset.originName || parsed.origin;
 
           const btn = document.getElementById('submitBtn');
           btn.disabled = true;
@@ -1704,18 +1706,19 @@
           show('submitLoadingState');
           updateSliderHeight();
 
-          const body = {
-                      origin,
-                      roast_level: roast,
-                      brewing_method_id: parseInt(method),
-                      source: 'user_submitted'
-                    };
+          // Use canonical origin name from combobox selection; fall back to parsing typed text
+          const inputB = document.getElementById('originInputB');
+          const parsedB = parseOriginVariety(origin);
+          const variety = inputB.dataset.variety || parsedB.variety || null;
+          const cleanOriginB = inputB.dataset.originName || parsedB.origin;
 
-                    // Include variety from selected origin or parsed from input
-                                        const inputB = document.getElementById('originInputB');
-                                        const parsedB = parseOriginVariety(origin);
-                                        const variety = inputB.dataset.variety || parsedB.variety || null;
-                                        if (variety) body.variety = variety;
+          const body = {
+            origin: cleanOriginB,
+            roast_level: roast,
+            brewing_method_id: parseInt(method),
+            source: 'user_submitted'
+          };
+          if (variety) body.variety = variety;
 
           if (grind)                 body.grind_size   = grind;
           if (tempRaw)               body.water_temp_c = parseInt(tempRaw);
@@ -1756,6 +1759,7 @@
                   const originB = document.getElementById('originInputB');
                   originB.value = '';
                   originB.dataset.variety = '';
+                  originB.dataset.originName = '';
                   document.getElementById('roastB').value = '';
                   document.getElementById('methodB').value = '';
                   document.getElementById('grindB').value = '';

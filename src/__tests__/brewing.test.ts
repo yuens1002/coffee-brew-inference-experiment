@@ -117,7 +117,7 @@ beforeEach(() => {
   vi.mocked(getBrews).mockResolvedValue({ count: 0, brews: [] });
   vi.mocked(createRecommendation).mockResolvedValue(mockRecommendationRecord);
   vi.mocked(findRecentRecommendation).mockResolvedValue(null);
-  vi.mocked(getBrewLinks).mockResolvedValue([])
+  vi.mocked(getBrewLinks).mockResolvedValue([]);
   vi.mocked(getVoteCounts).mockResolvedValue({ thumbs_up: 0, thumbs_down: 0 });
 });
 
@@ -354,8 +354,8 @@ describe('GET /brews/:id/compare', () => {
   it('falls back to 0.5 match_score when no recommendation link exists', async () => {
     vi.mocked(getBrewById).mockResolvedValue(mockBrew);
     vi.mocked(getBrewingMethods).mockResolvedValue(mockMethods);
-    vi.mocked(getBrewLinks).mockResolvedValue([])
-  vi.mocked(getVoteCounts).mockResolvedValue({ thumbs_up: 0, thumbs_down: 0 });
+    vi.mocked(getBrewLinks).mockResolvedValue([]);
+    vi.mocked(getVoteCounts).mockResolvedValue({ thumbs_up: 0, thumbs_down: 0 });
 
     const res = await brewingRoutes.request('/brews/1/compare');
 
