@@ -8,11 +8,11 @@
 
 ## Tech Stack
 
-- **TypeScript** (strict mode, ESM, Node 24)
+- **TypeScript** (strict mode, ESM, Node 24 — pinned via `nixpacks.toml` + `package.json engines`)
 - **Hono 4** + `@hono/node-server`
 - **Neon Postgres** + **Prisma ORM**
 - **MCP** (`@modelcontextprotocol/sdk` + `@hono/mcp` — Streamable HTTP transport)
-- **Vitest** (53 tests, zero TypeScript errors)
+- **Vitest** (56 tests, zero TypeScript errors)
 - **Railway** (auto-deploy from `main`)
 
 ---
@@ -107,7 +107,7 @@ npm install          # also runs prisma generate
 npx prisma migrate deploy
 npx prisma db seed
 
-npm test             # 53 tests
+npm test             # 56 tests
 npm run dev          # dev server on port 4000
 ```
 
