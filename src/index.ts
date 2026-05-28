@@ -34,6 +34,18 @@ try {
   app.get('/', (c) => c.json({ error: 'Landing page not available' }, 500));
 }
 
+// Favicon
+try {
+  const faviconBuffer = readFileSync(join(projectRoot, 'favicon.ico'));
+  app.get('/favicon.ico', (c) => {
+    c.header('Content-Type', 'image/x-icon');
+    c.header('Cache-Control', 'public, max-age=86400');
+    return c.body(faviconBuffer);
+  });
+} catch {
+  // favicon not critical — silently skip
+}
+
 // Mount brewing API routes
 app.route('/', brewingRoutes);
 

@@ -11,3 +11,8 @@ inference/*.pyc
 # Claude tooling — not for public repos
 .claude/
 CLAUDE.md
+
+# hermes-automation compiled outputs
+hermes-automation/*.js
+hermes-automation/*.d.ts
+hermes-automation/*.d.ts.map
