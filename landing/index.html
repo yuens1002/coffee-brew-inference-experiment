@@ -410,6 +410,57 @@
       line-height: 1.5;
     }
 
+    /* ── Vote buttons ────────────────────────────────────────── */
+    .vote-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+      align-items: center;
+    }
+
+    .vote-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-right: 8px;
+    }
+
+    .vote-btn {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      user-select: none;
+    }
+
+    .vote-btn:hover {
+      border-color: var(--border-hi);
+      color: var(--cream);
+    }
+
+    .vote-btn.selected-up {
+      background: rgba(200, 134, 10, 0.2);
+      border-color: var(--amber);
+      color: var(--gold);
+    }
+
+    .vote-btn.selected-down {
+      background: rgba(224, 82, 82, 0.12);
+      border-color: rgba(224, 82, 82, 0.4);
+      color: #e07070;
+    }
+
     /* ── Data points ────────────────────────────────────────── */
     .data-points {
       font-size: 13px;
@@ -893,6 +944,13 @@
               <!-- Data points -->
                             <div class="data-points" id="resDataPoints"></div>
 
+                            <!-- Vote buttons -->
+                            <div class="vote-buttons" id="voteButtons" style="display:none;">
+                              <span class="vote-label">Helpful?</span>
+                              <button class="vote-btn" id="voteUpBtn" onclick="onVote('up')" title="This recommendation helped">👍 Yes</button>
+                              <button class="vote-btn" id="voteDownBtn" onclick="onVote('down')" title="This recommendation missed the mark">👎 No</button>
+                            </div>
+
                           </div>
 
           </div>
@@ -1142,8 +1200,9 @@
 
     // ── State ──────────────────────────────────────────────────
     window._origins = [];
-    window._methodMap = {};
-    let _selectedRating = 0;
+        window._methodMap = {};
+        let _selectedRating = 0;
+        let _voteState = null; // null, 'up', or 'down'
 
     // ── Combobox factory ────────────────────────────────────────
     function initCombobox(inputId, dropdownId) {
@@ -1430,8 +1489,9 @@
       btn.textContent = 'Fetching…';
 
       hide('errorState');
-      hide('resultCard');
-      show('loadingState');
+            hide('resultCard');
+            document.getElementById('voteButtons').style.display = 'none';
+            show('loadingState');
       updateSliderHeight();
 
       const start = Date.now();
@@ -1515,7 +1575,9 @@
         `<strong>${dp != null ? dp : '?'}</strong> community brew${dp !== 1 ? 's' : ''} informed this recommendation.`;
 
       show('resultCard');
-      updateSliderHeight();
+            document.getElementById('voteButtons').style.display = 'flex';
+            resetVote();
+            updateSliderHeight();
 
       if (window.innerWidth < 600) {
         document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1623,10 +1685,40 @@
       el.classList.remove('hidden');
     }
     function showSubmitError(msg) {
-      const el = document.getElementById('submitErrorState');
-      el.textContent = msg;
-      el.classList.remove('hidden');
-    }
+          const el = document.getElementById('submitErrorState');
+          el.textContent = msg;
+          el.classList.remove('hidden');
+        }
+
+        // ── Vote handling ─────────────────────────────────────────
+        function onVote(vote) {
+          const upBtn   = document.getElementById('voteUpBtn');
+          const downBtn = document.getElementById('voteDownBtn');
+
+          if (_voteState === vote) {
+            // Toggle off
+            _voteState = null;
+            upBtn.classList.remove('selected-up');
+            downBtn.classList.remove('selected-down');
+          } else {
+            _voteState = vote;
+            if (vote === 'up') {
+              upBtn.classList.add('selected-up');
+              downBtn.classList.remove('selected-down');
+            } else {
+              downBtn.classList.add('selected-down');
+              upBtn.classList.remove('selected-up');
+            }
+          }
+        }
+
+        function resetVote() {
+          _voteState = null;
+          const upBtn   = document.getElementById('voteUpBtn');
+          const downBtn = document.getElementById('voteDownBtn');
+          upBtn.classList.remove('selected-up');
+          downBtn.classList.remove('selected-down');
+        }
 
     // ── Enter key on Face A inputs ──────────────────────────────
     ['roastA', 'methodA'].forEach(id => {
