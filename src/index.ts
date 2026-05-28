@@ -44,6 +44,6 @@ app.route('/mcp', mcpRoutes);
 app.get('/health', (c) => c.json({ status: 'ok' }));
 
 // Diagnostic: Node version (helps debug deployment issues)
-app.get('/debug/node', (c) => c.json({ node: process.version, dirname: import.meta.dirname ?? 'unsupported' }));
+app.get('/debug/node', (c) => c.json({ node: process.version }));
 
 export default app;
