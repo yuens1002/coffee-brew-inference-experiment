@@ -61,39 +61,43 @@ MCP Client → POST /mcp
 | `recommend` | ✅ Live | Deterministic community consensus via `computeBestBrew` |
 | `log_brew` | ✅ Live | Persists a brew entry; resolves origin; links to recent recommendation |
 | `search_brews` | ✅ Live | Filter brew log by origin, method, limit |
-| `compare_brew` | ⚠️ Stub | Delta vs method defaults — real scoring planned for Phase 2 |
+| `compare_brew` | ✅ Live | Delta vs method defaults; real `match_score` from `brew_recommendation_links` (`src/routes/mcp.ts`, `src/lib/db.ts:getBrewLinks`) |
 
-## Data model (v3)
+## Data model (v4)
 
 ```
 origins
   id PK, name TEXT UNIQUE, region TEXT, subregion TEXT,
-  aliases TEXT (comma-separated), is_verified INT
+  variety TEXT, aliases TEXT (comma-separated), is_verified INT
 
 brewing_methods
   id PK, name TEXT, description TEXT,
   default_temp_c INT, grind_size TEXT,
-  default_brew_time_s INT, default_ratio REAL
+  default_brew_time_s INT, default_ratio REAL,
+  technique JSONB (method-scoped technique schema)
 
 brews
   id PK, brewing_method_id FK → brewing_methods,
-  origin TEXT, roast_level TEXT, grind_size TEXT,
+  origin TEXT, variety TEXT, roast_level TEXT, grind_size TEXT,
   water_temp_c INT, ratio REAL, brew_time_s INT,
-  rating INT (1–5), notes TEXT, created_at TEXT,
-  source TEXT (user_submitted | scraped:reddit | scraped:home-barista),
+  rating INT (1–5), notes TEXT, created_at TIMESTAMPTZ,
+  source TEXT (user_submitted | scraped:reddit | scraped:home-barista | scraped:roaster),
   source_url TEXT,
   field_confidence TEXT (JSON: per-field extraction confidence, 0–1)
+  UNIQUE (source_url, brewing_method_id)   -- composite, allows same URL across methods
 
 recommendations
   id PK, brewing_method_id FK, origin TEXT, roast_level TEXT,
   grind_size TEXT, water_temp_c INT, ratio REAL, brew_time_s INT,
   recommendation TEXT, confidence TEXT (high|medium|low),
   confidence_breakdown TEXT (JSON), sources TEXT (JSON: SourceRef[]),
-  fingerprint TEXT UNIQUE, created_at TEXT
+  fingerprint TEXT UNIQUE,   -- deterministic: origin+roast+method; upserted on each call
+  thumbs_up INT DEFAULT 0, thumbs_down INT DEFAULT 0,
+  created_at TIMESTAMPTZ
 
 brew_recommendation_links
   brew_id FK, recommendation_id FK,
-  match_confidence REAL, linked_at TEXT
+  match_confidence REAL, user_vote TEXT (up|down|NULL), linked_at TIMESTAMPTZ
   PK (brew_id, recommendation_id)
 ```
 
@@ -109,12 +113,13 @@ brew_recommendation_links
    - Origin match (weight 3): exact = 1.0, substring = 0.5, absent = 0
    - Method match (weight 3): method ID equality
    - Roast level (weight 2): exact = 1.0, adjacent roast = 0.5 (e.g. medium ↔ medium-light)
+   - Variety match (weight 1): compares `brew.variety` directly against `params.variety` (per-brew, not per-origin map)
    - Grind size (weight 1): exact = 1.0
 4. **Composite score** = `matchScore × (rating/5) × recencyDecay × sourceTrust`
    - `recencyDecay`: linear 1.0 → 0.1 over 365 days
    - `sourceTrust`: user_submitted=1.0, scraped:home-barista=0.85, scraped:reddit=0.7
 5. **Take top 5**, compute confidence tier, build consensus params via weighted average (numeric) or weighted mode (categorical)
-6. **Persist recommendation** to `recommendations` table with fingerprint + confidence breakdown
+6. **Upsert recommendation** — deterministic fingerprint (`origin-roast-method_id`) means the same params always resolve to the same record; votes accumulate across calls
 
 ### Confidence tiers
 
@@ -199,11 +204,10 @@ Railway project: `brew-guide` — auto-deploys from `main` on `yuens1002/brew-gu
 ## Planned evolution
 
 See `docs/roadmap.md`. Highest-priority gaps:
-1. `compare_brew` — wire `match_score` from `brew_recommendation_links` (currently hardcoded `0.5`)
-2. Semantic similarity on brew notes (keyword search before committing to embeddings)
-3. Scraping pipeline — ingest roaster brew guides + community sources as seed for technique data (Phase 6)
-4. Technique Intelligence (Phase 6) — method-scoped technique fields, LLM extraction at ingest, narrative synthesis at query time
-5. Register with MCP Registry (registry.modelcontextprotocol.io) — low priority, post-competition
+1. Semantic similarity on brew notes (keyword search before committing to embeddings)
+2. Scraping pipeline — ingest roaster brew guides + community sources as seed for technique data (Phase 6)
+3. Technique Intelligence (Phase 6) — method-scoped technique fields, LLM extraction at ingest, narrative synthesis at query time
+4. Register with MCP Registry (registry.modelcontextprotocol.io) — low priority, post-competition
 
 ### Narrative synthesis — opt-in design decision
 

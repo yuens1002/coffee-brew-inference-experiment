@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import type {
   BrewingMethod, Brew, BrewWithMethod, BrewSource,
-  Origin, RecommendationRecord, BrewRecommendationLink, BrewTechnique,
+  Origin, RecommendationRecord, BrewRecommendationLink, BrewTechnique, VoteResponse,
 } from '../types.js';
 
 const prisma = new PrismaClient();
@@ -19,16 +19,6 @@ export async function getOrigins(): Promise<Origin[]> {
     aliases: r.aliases ?? undefined,
     is_verified: r.is_verified,
   }));
-}
-
-export async function searchOrigins(query: string): Promise<Origin[]> {
-  const origins = await getOrigins();
-  const q = query.toLowerCase().trim();
-  return origins.filter((o) =>
-    o.name.toLowerCase().includes(q) ||
-    (o.aliases || '').toLowerCase().includes(q) ||
-    (o.subregion || '').toLowerCase().includes(q),
-  );
 }
 
 // ── Brewing Methods ─────────────────────────────────────
@@ -74,6 +64,7 @@ export async function getBrews(filters?: {
     brewing_method_id: r.brewing_method_id,
     brewing_method: r.brewing_method.name,
     origin: r.origin,
+    variety: r.variety ?? undefined,
     roast_level: r.roast_level,
     grind_size: r.grind_size,
     water_temp_c: r.water_temp_c,
@@ -97,6 +88,7 @@ export async function getBrewById(id: number): Promise<Brew | null> {
     id: r.id,
     brewing_method_id: r.brewing_method_id,
     origin: r.origin,
+    variety: r.variety ?? undefined,
     roast_level: r.roast_level,
     grind_size: r.grind_size,
     water_temp_c: r.water_temp_c,
@@ -118,6 +110,7 @@ export async function addBrew(
     data: {
       brewing_method_id: brew.brewing_method_id,
       origin: brew.origin,
+      variety: brew.variety ?? null,
       roast_level: brew.roast_level,
       grind_size: brew.grind_size,
       water_temp_c: brew.water_temp_c,
@@ -134,6 +127,7 @@ export async function addBrew(
     id: r.id,
     brewing_method_id: r.brewing_method_id,
     origin: r.origin,
+    variety: r.variety ?? undefined,
     roast_level: r.roast_level,
     grind_size: r.grind_size,
     water_temp_c: r.water_temp_c,
@@ -151,11 +145,23 @@ export async function addBrew(
 // ── Recommendations ─────────────────────────────────────
 
 export async function createRecommendation(
-  rec: Omit<RecommendationRecord, 'id' | 'created_at' | 'fingerprint'>,
+  rec: Omit<RecommendationRecord, 'id' | 'created_at' | 'fingerprint' | 'thumbs_up' | 'thumbs_down'>,
 ): Promise<RecommendationRecord> {
-  const fingerprint = `${(rec.origin || 'unknown').toLowerCase()}-${(rec.roast_level || 'unknown').toLowerCase()}-${rec.brewing_method_id}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-  const r = await prisma.recommendation.create({
-    data: {
+  // Deterministic fingerprint: same origin+roast+method → same record (votes accumulate)
+  const fingerprint = `${(rec.origin || 'unknown').toLowerCase()}-${(rec.roast_level || 'unknown').toLowerCase()}-${rec.brewing_method_id}`;
+  const r = await prisma.recommendation.upsert({
+    where: { fingerprint },
+    update: {
+      grind_size: rec.grind_size,
+      water_temp_c: rec.water_temp_c,
+      ratio: rec.ratio,
+      brew_time_s: rec.brew_time_s,
+      recommendation: rec.recommendation,
+      confidence: rec.confidence,
+      confidence_breakdown: rec.confidence_breakdown ?? null,
+      sources: rec.sources ?? null,
+    },
+    create: {
       brewing_method_id: rec.brewing_method_id,
       origin: rec.origin,
       roast_level: rec.roast_level,
@@ -168,6 +174,8 @@ export async function createRecommendation(
       confidence_breakdown: rec.confidence_breakdown ?? null,
       sources: rec.sources ?? null,
       fingerprint,
+      thumbs_up: 0,
+      thumbs_down: 0,
     },
   });
   return {
@@ -184,6 +192,8 @@ export async function createRecommendation(
     confidence_breakdown: r.confidence_breakdown ?? undefined,
     sources: r.sources ?? undefined,
     fingerprint: r.fingerprint,
+    thumbs_up: r.thumbs_up,
+    thumbs_down: r.thumbs_down,
     created_at: r.created_at.toISOString(),
   };
 }
@@ -205,6 +215,8 @@ export async function getRecommendation(id: number): Promise<RecommendationRecor
     confidence_breakdown: r.confidence_breakdown ?? undefined,
     sources: r.sources ?? undefined,
     fingerprint: r.fingerprint,
+    thumbs_up: r.thumbs_up,
+    thumbs_down: r.thumbs_down,
     created_at: r.created_at.toISOString(),
   };
 }
@@ -240,6 +252,8 @@ export async function findRecentRecommendation(params: {
     confidence_breakdown: r.confidence_breakdown ?? undefined,
     sources: r.sources ?? undefined,
     fingerprint: r.fingerprint,
+    thumbs_up: r.thumbs_up,
+    thumbs_down: r.thumbs_down,
     created_at: r.created_at.toISOString(),
   };
 }
@@ -280,15 +294,18 @@ export async function getBrewLinks(brewId: number): Promise<BrewRecommendationLi
 // ── Vote Counts ───────────────────────────────────────────
 
 export async function getVoteCounts(recommendationId: number): Promise<{ thumbs_up: number; thumbs_down: number }> {
-  const links = await prisma.brewRecommendationLink.findMany({
-    where: { recommendation_id: recommendationId, user_vote: { not: null } },
-    select: { user_vote: true },
+  const r = await prisma.recommendation.findUnique({
+    where: { id: recommendationId },
+    select: { thumbs_up: true, thumbs_down: true },
   });
-  let thumbs_up = 0;
-  let thumbs_down = 0;
-  for (const link of links) {
-    if (link.user_vote === 'up') thumbs_up++;
-    else if (link.user_vote === 'down') thumbs_down++;
-  }
-  return { thumbs_up, thumbs_down };
+  return { thumbs_up: r?.thumbs_up ?? 0, thumbs_down: r?.thumbs_down ?? 0 };
+}
+
+export async function recordVote(recommendationId: number, vote: 'up' | 'down'): Promise<VoteResponse> {
+  const r = await prisma.recommendation.update({
+    where: { id: recommendationId },
+    data: vote === 'up' ? { thumbs_up: { increment: 1 } } : { thumbs_down: { increment: 1 } },
+    select: { thumbs_up: true, thumbs_down: true },
+  });
+  return r;
 }

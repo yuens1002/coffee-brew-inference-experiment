@@ -1,6 +1,6 @@
 {
   "name": "coffee-brew-inference-experiment",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "engines": {
     "node": ">=24.0.0"
   },
@@ -9,7 +9,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "npx tsx watch src/server.ts",
-    "dx": "npx tsx src/server.ts & python -m http.server 5173 -d landing",
+    "dx": "concurrently --kill-others-on-fail \"npx tsx watch src/server.ts\" \"python -m http.server 5173 -d landing\"",
     "build": "tsc",
     "start": "npx prisma migrate deploy && node dist/server.js",
     "test": "vitest run",
@@ -36,6 +36,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.13.13",
+    "concurrently": "^10.0.0",
     "prisma": "^5.22.0",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2",

@@ -7,6 +7,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+- 2026-05-28 — fix(landing): hero copy, card spacing, and animated CTA arrows
+
 - 2026-05-28 — fix(landing,seed): patch critical bugs from iteration-3 review
 
 ## [2.0.3] — Previous
