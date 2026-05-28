@@ -1424,6 +1424,15 @@
               document.getElementById('roastB').value        = document.getElementById('roastA').value;
               document.getElementById('methodB').value       = document.getElementById('methodA').value;
 
+              // Pre-fill brew parameters from last recommendation
+              const rec = window._lastRec && window._lastRec.input;
+              if (rec) {
+                if (rec.grind_size)   document.getElementById('grindB').value = rec.grind_size;
+                if (rec.water_temp_c) document.getElementById('tempB').value  = rec.water_temp_c;
+                if (rec.ratio)        document.getElementById('ratioB').value = Math.round(1 / rec.ratio);
+                if (rec.brew_time_s)  document.getElementById('timeB').value  = rec.brew_time_s;
+              }
+
               const wrapper = document.getElementById('slideWrapper');
               wrapper.style.height = document.getElementById('faceB').offsetHeight + 'px';
               wrapper.classList.add('show-b');
@@ -1637,6 +1646,7 @@
 
     // ── Render result card ──────────────────────────────────────
     function renderResult(data) {
+      window._lastRec  = data;
       const input      = data.input || {};
       const methodName = data.brewing_method || '';
 
