@@ -7,19 +7,20 @@ vi.mock('../lib/db.js', () => ({
   getBrewById: vi.fn(),
   addBrew: vi.fn(),
   getOrigins: vi.fn(),
-  searchOrigins: vi.fn(),
   createRecommendation: vi.fn(),
   findRecentRecommendation: vi.fn(),
   linkBrewToRecommendation: vi.fn(),
   getBrewLinks: vi.fn(),
   getVoteCounts: vi.fn(),
+  getRecommendation: vi.fn(),
+  recordVote: vi.fn(),
 }));
 
 import brewingRoutes from '../routes/brewing.js';
 import {
   getBrewingMethods, addBrew, getBrews, getBrewById,
   getOrigins, createRecommendation, findRecentRecommendation, getBrewLinks,
-  getVoteCounts,
+  getVoteCounts, getRecommendation, recordVote,
 } from '../lib/db.js';
 
 const mockMethods: BrewingMethod[] = [
@@ -55,7 +56,9 @@ const mockRecommendationRecord: RecommendationRecord = {
   brew_time_s: 210,
   recommendation: 'No community data yet — using Pour Over defaults.',
   confidence: 'low',
-  fingerprint: 'colombia-medium-1-1234567890',
+  fingerprint: 'colombia-medium-1',
+  thumbs_up: 0,
+  thumbs_down: 0,
   created_at: '2026-05-26T00:00:00Z',
 };
 
@@ -119,6 +122,8 @@ beforeEach(() => {
   vi.mocked(findRecentRecommendation).mockResolvedValue(null);
   vi.mocked(getBrewLinks).mockResolvedValue([]);
   vi.mocked(getVoteCounts).mockResolvedValue({ thumbs_up: 0, thumbs_down: 0 });
+  vi.mocked(getRecommendation).mockResolvedValue(null);
+  vi.mocked(recordVote).mockResolvedValue({ thumbs_up: 1, thumbs_down: 0 });
 });
 
 describe('GET /origins', () => {
@@ -414,5 +419,47 @@ describe('POST /recommend', () => {
     });
 
     expect(res.status).toBe(404);
+  });
+});
+
+// C4: user_vote flows through POST /recommend/:id/vote
+describe('POST /recommend/:id/vote', () => {
+  it('calls recordVote with correct recommendation_id and vote value, returns counts', async () => {
+    vi.mocked(getRecommendation).mockResolvedValue(mockRecommendationRecord);
+    vi.mocked(recordVote).mockResolvedValue({ thumbs_up: 1, thumbs_down: 0 });
+
+    const res = await brewingRoutes.request('/recommend/1/vote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vote: 'up' }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(vi.mocked(recordVote)).toHaveBeenCalledWith(1, 'up');
+    const body = await res.json();
+    expect(body.thumbs_up).toBe(1);
+    expect(body.thumbs_down).toBe(0);
+  });
+
+  it('returns 404 for unknown recommendation id', async () => {
+    vi.mocked(getRecommendation).mockResolvedValue(null);
+
+    const res = await brewingRoutes.request('/recommend/99999/vote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vote: 'up' }),
+    });
+
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 400 for invalid vote value', async () => {
+    const res = await brewingRoutes.request('/recommend/1/vote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vote: 'sideways' }),
+    });
+
+    expect(res.status).toBe(400);
   });
 });

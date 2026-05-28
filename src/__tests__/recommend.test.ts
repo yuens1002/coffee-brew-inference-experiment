@@ -7,18 +7,15 @@ vi.mock('../lib/db.js', () => ({
   getBrewById: vi.fn(),
   addBrew: vi.fn(),
   getOrigins: vi.fn(),
-  searchOrigins: vi.fn(),
   createRecommendation: vi.fn(),
   findRecentRecommendation: vi.fn(),
   linkBrewToRecommendation: vi.fn(),
-  getVoteCounts: vi.fn(),
 }));
 
 import { computeBestBrew, tryLinkBrew, resolveOrigin } from '../lib/recommend.js';
 import {
   getBrewingMethods, getBrews, getOrigins,
   createRecommendation, findRecentRecommendation, linkBrewToRecommendation,
-  getVoteCounts,
 } from '../lib/db.js';
 
 const mockMethod: BrewingMethod = {
@@ -65,7 +62,9 @@ const mockRecRecord: RecommendationRecord = {
   brew_time_s: 210,
   recommendation: 'test recommendation',
   confidence: 'low',
-  fingerprint: 'colombia-medium-1-123',
+  fingerprint: 'colombia-medium-1',
+  thumbs_up: 0,
+  thumbs_down: 0,
   created_at: '2026-05-26T00:00:00Z',
 };
 
@@ -74,7 +73,6 @@ beforeEach(() => {
   vi.mocked(getOrigins).mockResolvedValue([]);
   vi.mocked(createRecommendation).mockResolvedValue(mockRecRecord);
   vi.mocked(findRecentRecommendation).mockResolvedValue(null);
-  vi.mocked(getVoteCounts).mockResolvedValue({ thumbs_up: 0, thumbs_down: 0 });
   vi.mocked(linkBrewToRecommendation).mockResolvedValue({
     brew_id: 1, recommendation_id: 1, match_confidence: 0.85, linked_at: '',
   });
@@ -173,6 +171,29 @@ describe('computeBestBrew — origin confidence degrades scoring', () => {
     // Malformed JSON → originConf defaults to 1.0 → should still reach high
     const result = await computeBestBrew({ brewing_method_id: 1, origin: 'Colombia', roast_level: 'medium' });
     expect(result.confidence).toBe('high');
+  });
+});
+
+// C3: variety scoring invariant
+describe('computeBestBrew — variety scoring discriminates between candidates', () => {
+  it('brew with matching variety ranks higher than brew with different variety (same origin, rating, recency)', async () => {
+    vi.mocked(getBrewingMethods).mockResolvedValue([mockMethod]);
+    const createdAt = new Date().toISOString();
+    const brewWithMatchingVariety = makeBrew({ id: 1, origin: 'Ethiopia', variety: 'heirloom', rating: 5, created_at: createdAt });
+    const brewWithDifferentVariety = makeBrew({ id: 2, origin: 'Ethiopia', variety: 'robusta', rating: 5, created_at: createdAt });
+    vi.mocked(getBrews).mockResolvedValue({ count: 2, brews: [brewWithMatchingVariety, brewWithDifferentVariety] });
+
+    const result = await computeBestBrew({
+      brewing_method_id: 1,
+      origin: 'Ethiopia',
+      roast_level: 'medium',
+      variety: 'heirloom',
+    });
+
+    // Brew 1 (variety=heirloom, matching) should rank above brew 2 (variety=robusta)
+    expect(result.sources.length).toBeGreaterThanOrEqual(2);
+    expect(result.sources[0].brew_id).toBe(1);
+    expect(result.sources[0].relevance).toBeGreaterThan(result.sources[1].relevance);
   });
 });
 

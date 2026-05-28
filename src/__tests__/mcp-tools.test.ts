@@ -7,7 +7,6 @@ vi.mock('../lib/db.js', () => ({
   getBrewById: vi.fn(),
   addBrew: vi.fn(),
   getOrigins: vi.fn(),
-  searchOrigins: vi.fn(),
   createRecommendation: vi.fn(),
   findRecentRecommendation: vi.fn(),
   linkBrewToRecommendation: vi.fn(),
@@ -77,7 +76,9 @@ const mockRecommendationRecord: RecommendationRecord = {
   brew_time_s: 210,
   recommendation: 'No community data yet — using Pour Over defaults.',
   confidence: 'low',
-  fingerprint: 'colombia-medium-1-1234567890',
+  fingerprint: 'colombia-medium-1',
+  thumbs_up: 0,
+  thumbs_down: 0,
   created_at: '2026-05-26T00:00:00Z',
 };
 
@@ -229,6 +230,35 @@ describe('MCP tool: log_brew — field_confidence.origin storage', () => {
 
     const conf = JSON.parse(vi.mocked(addBrew).mock.calls[0][0].field_confidence!);
     expect(conf.origin).toBe(0.5);
+  });
+});
+
+// C5: log_brew rating bounds
+describe('MCP tool: log_brew — rating bounds', () => {
+  const brewBase = {
+    brewing_method_id: 1,
+    origin: 'Colombia',
+    roast_level: 'medium',
+    grind_size: 'medium-fine',
+    water_temp_c: 93,
+    ratio: 0.0625,
+    brew_time_s: 180,
+  };
+
+  it('rejects rating: 0 with MCP error', async () => {
+    const data = await callMcp('tools/call', {
+      name: 'log_brew',
+      arguments: { ...brewBase, rating: 0 },
+    });
+    expect(data.result.isError).toBe(true);
+  });
+
+  it('rejects rating: 6 with MCP error', async () => {
+    const data = await callMcp('tools/call', {
+      name: 'log_brew',
+      arguments: { ...brewBase, rating: 6 },
+    });
+    expect(data.result.isError).toBe(true);
   });
 });
 

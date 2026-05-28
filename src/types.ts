@@ -42,6 +42,7 @@ export interface Brew {
   id: number;
   brewing_method_id: number;
   origin: string;
+  variety?: string;
   roast_level: string;
   grind_size: string;
   water_temp_c: number;
@@ -112,8 +113,21 @@ export interface RecommendationRecord {
   confidence: string;
   confidence_breakdown?: string; // JSON: {data_points, match_count, match_quality}
   sources?: string;              // JSON: SourceRef[]
-  fingerprint: string;           // "ethiopia-light-1-1711234567"
+  fingerprint: string;
+  thumbs_up: number;
+  thumbs_down: number;
   created_at: string;
+}
+
+/** POST /recommend/:id/vote request body */
+export interface VoteRequest {
+  vote: 'up' | 'down';
+}
+
+/** POST /recommend/:id/vote response */
+export interface VoteResponse {
+  thumbs_up: number;
+  thumbs_down: number;
 }
 
 /** Implicit link between a brew and a recommendation */
@@ -131,6 +145,7 @@ export interface BrewWithMethod {
   brewing_method_id: number;
   brewing_method: string;
   origin: string;
+  variety?: string;
   roast_level: string;
   grind_size: string;
   water_temp_c: number;

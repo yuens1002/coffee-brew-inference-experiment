@@ -589,6 +589,15 @@
       text-align: center;
     }
 
+    .log-brew-link {
+      font-size: 14px;
+      color: var(--gold);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.15s;
+    }
+    .log-brew-link:hover { border-bottom-color: var(--gold); }
+
     /* ── Submit success ─────────────────────────────────────── */
     .submit-success {
       margin-top: 20px;
@@ -985,8 +994,13 @@
                             <!-- Vote buttons -->
                             <div class="vote-buttons" id="voteButtons" style="display:none;">
                               <span class="vote-label">Helpful?</span>
-                              <button class="vote-btn" id="voteUpBtn" onclick="onVote('up')" title="This recommendation helped">👍 Yes</button>
-                              <button class="vote-btn" id="voteDownBtn" onclick="onVote('down')" title="This recommendation missed the mark">👎 No</button>
+                              <button class="vote-btn" id="voteUpBtn" onclick="onVote('up')" title="This recommendation helped">👍 <span id="voteUpCount">0</span></button>
+                              <button class="vote-btn" id="voteDownBtn" onclick="onVote('down')" title="This recommendation missed the mark">👎 <span id="voteDownCount">0</span></button>
+                            </div>
+
+                            <!-- Log brew CTA — shown after recommendation -->
+                            <div id="logBrewCta" style="display:none; margin-top:16px; text-align:center;">
+                              <a href="#" class="log-brew-link" onclick="onShareClick(event)">Brewed it? Log how it went →</a>
                             </div>
 
                           </div>
@@ -1227,7 +1241,7 @@
   <!-- ── JavaScript ─────────────────────────────────────────── -->
   <script>
     // Use relative paths when served from same origin (via Hono), fallback for file://
-    const API = window.location.origin.startsWith('http') ? '' : 'http://localhost:4000';
+    const API = (window.location.hostname === 'localhost' && window.location.port !== '4000') ? 'http://localhost:4000' : '';
 
     // ── State ──────────────────────────────────────────────────
         window._origins = [];
@@ -1235,6 +1249,7 @@
         window._methodMap = {};
         let _selectedRating = 0;
             let _voteState = null; // null, 'up', or 'down'
+        let _recId = null;    // current recommendation id for vote API
 
         // Parse origin text for variety: "Papua New Guinea (bourbon)" → {origin, variety}
         function parseOriginVariety(text) {
@@ -1580,6 +1595,7 @@
           hide('errorState');
           hide('resultCard');
           document.getElementById('voteButtons').style.display = 'none';
+          document.getElementById('logBrewCta').style.display = 'none';
           show('loadingState');
           updateSliderHeight();
 
@@ -1665,8 +1681,12 @@
       document.getElementById('resDataPoints').innerHTML =
         `<strong>${dp != null ? dp : '?'}</strong> community brew${dp !== 1 ? 's' : ''} informed this recommendation.`;
 
+      _recId = data.id ?? null;
+      document.getElementById('voteUpCount').textContent = data.thumbs_up ?? 0;
+      document.getElementById('voteDownCount').textContent = data.thumbs_down ?? 0;
       show('resultCard');
             document.getElementById('voteButtons').style.display = 'flex';
+            document.getElementById('logBrewCta').style.display = 'block';
             resetVote();
             updateSliderHeight();
 
@@ -1792,25 +1812,33 @@
         }
 
         // ── Vote handling ─────────────────────────────────────────
-        function onVote(vote) {
+        async function onVote(vote) {
+          if (!_recId || _voteState === vote) return;
+
           const upBtn   = document.getElementById('voteUpBtn');
           const downBtn = document.getElementById('voteDownBtn');
 
-          if (_voteState === vote) {
-            // Toggle off
-            _voteState = null;
-            upBtn.classList.remove('selected-up');
+          _voteState = vote;
+          if (vote === 'up') {
+            upBtn.classList.add('selected-up');
             downBtn.classList.remove('selected-down');
           } else {
-            _voteState = vote;
-            if (vote === 'up') {
-              upBtn.classList.add('selected-up');
-              downBtn.classList.remove('selected-down');
-            } else {
-              downBtn.classList.add('selected-down');
-              upBtn.classList.remove('selected-up');
-            }
+            downBtn.classList.add('selected-down');
+            upBtn.classList.remove('selected-up');
           }
+
+          try {
+            const res = await fetch(`${API}/recommend/${_recId}/vote`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ vote })
+            });
+            if (res.ok) {
+              const counts = await res.json();
+              document.getElementById('voteUpCount').textContent = counts.thumbs_up ?? 0;
+              document.getElementById('voteDownCount').textContent = counts.thumbs_down ?? 0;
+            }
+          } catch (_) { /* silently ignore network errors on votes */ }
         }
 
         function resetVote() {

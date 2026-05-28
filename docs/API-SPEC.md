@@ -19,6 +19,7 @@ Returns all known coffee origins (seed data + discovered). Used for origin autoc
     "name": "Ethiopia",
     "region": "Africa",
     "subregion": "Yirgacheffe, Sidamo, Guji, Harrar",
+    "variety": "heirloom",
     "aliases": "Ethiopean,Ethopian",
     "is_verified": true
   }
@@ -40,10 +41,23 @@ Returns all available brewing methods to populate the dropdown.
     "default_ratio": 0.0625,
     "default_temp_c": 93,
     "default_brew_time_s": 210,
-    "grind_size": "medium-fine"
+    "grind_size": "medium-fine",
+    "technique": {
+      "bloom_weight_ratio": 2,
+      "bloom_duration_s": 45,
+      "pour_stages": [
+        { "at_s": 0, "volume_ml": 60, "note": "bloom" },
+        { "at_s": 45, "volume_ml": 150, "note": "first pour" },
+        { "at_s": 90, "volume_ml": 290, "note": "second pour" }
+      ],
+      "agitation": "swirl",
+      "drawdown_target_s": 210
+    }
   }
 ]
 ```
+
+The `technique` field is a discriminated-union JSONB object whose shape depends on the brewing method. See `src/types.ts` for each variant (`PourOverTechnique`, `EspressoTechnique`, `FrenchPressTechnique`, etc.).
 
 ---
 
@@ -68,26 +82,53 @@ Returns a brew recommendation computed from weighted consensus over logged brew 
   "brewing_method": "Pour Over",
   "input": {
     "origin": "Colombia",
+    "variety": "heirloom",
     "roast_level": "medium",
     "grind_size": "medium-fine",
     "water_temp_c": 93,
     "ratio": 0.0625,
     "brew_time_s": 210
   },
-  "recommendation": "No community data yet — using Pour Over defaults. For Colombia (medium roast), try Pour Over at 93°C with a medium-fine grind, 210s brew time, 1:16 ratio.",
-  "confidence": "low",
-  "sources": [],
-  "data_points_used": 0,
+  "recommendation": "Based on 3 community brews. For Colombia (medium roast), try Pour Over at 93°C with a medium-fine grind, 210s brew time, 1:16 ratio.",
+  "confidence": "high",
+  "sources": [{ "brew_id": 5, "relevance": 0.94 }],
+  "data_points_used": 3,
   "technique": {
-    "method_id": 1,
     "bloom_weight_ratio": 2,
     "bloom_duration_s": 45,
-    "pour_stages": 3,
-    "target_drawdown_s": 210,
-    "notes": "Centre pour, keep grinds saturated"
-  }
+    "pour_stages": [
+      { "at_s": 0, "volume_ml": 60, "note": "bloom" }
+    ],
+    "agitation": "swirl",
+    "drawdown_target_s": 210
+  },
+  "thumbs_up": 2,
+  "thumbs_down": 0
 }
 ```
+
+`thumbs_up` and `thumbs_down` reflect community votes cast via `POST /recommend/:id/vote`. Calls with the same origin+roast+method return the same recommendation record (votes accumulate).
+
+---
+
+### `POST /recommend/:id/vote`
+Records a thumbs-up or thumbs-down vote on a recommendation. The recommendation `id` comes from a prior `POST /recommend` response.
+
+**Request:**
+```json
+{ "vote": "up" }
+```
+
+`vote` must be `"up"` or `"down"`. Any other value returns 400.
+
+**Response (200):**
+```json
+{ "thumbs_up": 3, "thumbs_down": 1 }
+```
+
+**Errors:**
+- `400` — invalid vote value
+- `404` — recommendation not found
 
 ---
 

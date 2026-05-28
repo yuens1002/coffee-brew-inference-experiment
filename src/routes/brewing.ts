@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { getBrewingMethods, getBrews, getBrewById, addBrew, getOrigins, getBrewLinks } from '../lib/db.js';
+import { getBrewingMethods, getBrews, getBrewById, addBrew, getOrigins, getBrewLinks, recordVote, getRecommendation } from '../lib/db.js';
 import { computeBestBrew, tryLinkBrew, resolveOrigin } from '../lib/recommend.js';
 import type { BrewingMethod, Brew } from '../types.js';
 
@@ -72,6 +72,7 @@ app.post('/brews', zValidator('json', brewSchema), async (c) => {
   const brew = await addBrew({
     brewing_method_id: data.brewing_method_id,
     origin,
+    variety: data.variety,
     roast_level: data.roast_level,
     grind_size: data.grind_size,
     water_temp_c: data.water_temp_c,
@@ -148,6 +149,19 @@ const recommendSchema = z.object({
   ratio: z.number().optional(),
   brew_time_s: z.number().optional(),
   variety: z.string().optional(),
+});
+
+// POST /recommend/:id/vote
+const voteSchema = z.object({ vote: z.enum(['up', 'down']) });
+
+app.post('/recommend/:id/vote', zValidator('json', voteSchema), async (c) => {
+  const id = parseInt(c.req.param('id'), 10);
+  if (isNaN(id)) return c.json({ error: 'Invalid recommendation ID' }, 400);
+  const rec = await getRecommendation(id);
+  if (!rec) return c.json({ error: 'Recommendation not found' }, 404);
+  const { vote } = c.req.valid('json');
+  const counts = await recordVote(id, vote);
+  return c.json(counts);
 });
 
 app.post('/recommend', zValidator('json', recommendSchema), async (c) => {

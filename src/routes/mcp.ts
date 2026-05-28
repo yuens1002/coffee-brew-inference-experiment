@@ -31,7 +31,7 @@ function buildMcpServer(): McpServer {
       title: 'Recommend Brew Parameters',
       description: 'Get a community-consensus brew recommendation. Returns brew parameters (temp, ratio, grind, time), confidence tier (high/medium/low based on community data), sources, and method-specific technique guidance (e.g. bloom timing, pour stages, steep time).',
       inputSchema: {
-        origin: z.string().describe('Coffee origin (e.g. Colombia, Ethiopia)'),
+        origin: z.string().optional().describe('Coffee origin (e.g. Colombia, Ethiopia)'),
         roast_level: z.string().optional().describe('Roast level (light, medium, dark)'),
         brewing_method_id: z.number().optional().describe('Preferred brewing method ID'),
         grind_size: z.string().optional().describe('Preferred grind size'),
@@ -39,7 +39,7 @@ function buildMcpServer(): McpServer {
       },
     },
     async ({ origin, roast_level, brewing_method_id, grind_size, variety }) => {
-      const resolvedOrigin = origin ? (await resolveOrigin(origin)).resolved : origin;
+      const resolvedOrigin = origin ? (await resolveOrigin(origin)).resolved : undefined;
       try {
         const result = await computeBestBrew({ origin: resolvedOrigin, roast_level, brewing_method_id, grind_size, variety });
         return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
@@ -59,22 +59,39 @@ function buildMcpServer(): McpServer {
       inputSchema: {
         brewing_method_id: z.number().describe('ID of the brewing method used'),
         origin: z.string().describe('Coffee origin (e.g. Colombia, Ethiopia)'),
+        variety: z.string().optional().describe('Coffee variety (e.g. heirloom, SL28)'),
         roast_level: z.string().describe('Roast level (light, medium, medium-dark, dark)'),
         grind_size: z.string().describe('Grind size used'),
         water_temp_c: z.number().describe('Water temperature in Celsius'),
         ratio: z.number().describe('Coffee-to-water ratio (e.g. 0.0625 for 1:16)'),
         brew_time_s: z.number().describe('Brew time in seconds'),
-        rating: z.number().min(1).max(5).describe('Rating from 1 to 5'),
+        rating: z.number().int().min(1).max(5).describe('Rating from 1 to 5'),
         notes: z.string().optional().describe('Tasting notes or observations'),
+        source_url: z.string().url().optional().describe('Source URL for this brew data'),
+        field_confidence: z.string().optional().describe('JSON-serialized per-field confidence scores'),
       },
     },
     async (params) => {
       const { resolved: resolvedOrigin, verified } = await resolveOrigin(params.origin);
       const originConfValue = verified ? 1.0 : resolvedOrigin !== params.origin ? 0.7 : 0.5;
-      const fieldConfidence = JSON.stringify({ origin: originConfValue });
+      // Merge: spread user-supplied confidence, then overwrite with server-computed origin confidence
+      let base: Record<string, unknown> = {};
+      if (params.field_confidence) {
+        try { base = JSON.parse(params.field_confidence); } catch { /* ignore invalid JSON */ }
+      }
+      const fieldConfidence = JSON.stringify({ ...base, origin: originConfValue });
       const brew = await addBrew({
-        ...params,
+        brewing_method_id: params.brewing_method_id,
         origin: resolvedOrigin,
+        variety: params.variety,
+        roast_level: params.roast_level,
+        grind_size: params.grind_size,
+        water_temp_c: params.water_temp_c,
+        ratio: params.ratio,
+        brew_time_s: params.brew_time_s,
+        rating: params.rating,
+        notes: params.notes,
+        source_url: params.source_url,
         field_confidence: fieldConfidence,
       } as Omit<Brew, 'id' | 'created_at'>);
       tryLinkBrew(brew).catch(() => {}); // fire-and-forget implicit feedback link
