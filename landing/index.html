@@ -990,9 +990,10 @@
             <div id="submitErrorState" class="error-state hidden"></div>
 
             <div id="submitSuccessState" class="submit-success hidden">
-              ✓ Brew logged — thank you!<br>
-              <a href="#" onclick="onBackClick(event)">Get another recommendation →</a>
-            </div>
+                          ✅ Brew logged successfully! Your data helps the community consensus.
+                          <br>
+                          <a href="#" onclick="onBackClick(event)">Get another recommendation →</a>
+                        </div>
 
           </div>
           <!-- /faceB -->
@@ -1522,74 +1523,90 @@
     }
 
     // ── Submit brew (Face B) ────────────────────────────────────
-    async function submitBrew() {
-      const origin   = document.getElementById('originInputB').value.trim();
-      const roast    = document.getElementById('roastB').value;
-      const method   = document.getElementById('methodB').value;
-      const grind    = document.getElementById('grindB').value;
-      const tempRaw  = document.getElementById('tempB').value;
-      const ratioRaw = document.getElementById('ratioB').value;
-      const timeRaw  = document.getElementById('timeB').value;
-      const notes    = document.getElementById('notesB').value.trim();
+        async function submitBrew() {
+          const origin   = document.getElementById('originInputB').value.trim();
+          const roast    = document.getElementById('roastB').value;
+          const method   = document.getElementById('methodB').value;
+          const grind    = document.getElementById('grindB').value;
+          const tempRaw  = document.getElementById('tempB').value;
+          const ratioRaw = document.getElementById('ratioB').value;
+          const timeRaw  = document.getElementById('timeB').value;
+          const notes    = document.getElementById('notesB').value.trim();
 
-      if (!origin || !roast || !method) {
-        showSubmitError('Origin, roast level, and brewing method are required.');
-        return;
-      }
+          if (!origin || !roast || !method) {
+            showSubmitError('Origin, roast level, and brewing method are required.');
+            return;
+          }
 
-      // Validate required fields (Zod schema requires these)
-      if (!grind || !tempRaw || !ratioRaw || !timeRaw || _selectedRating <= 0) {
-        showSubmitError('All fields are required — please fill in grind, temp, ratio, time, and rating.');
-        return;
-      }
+          // Validate required fields (Zod schema requires these)
+          if (!grind || !tempRaw || !ratioRaw || !timeRaw || _selectedRating <= 0) {
+            showSubmitError('All fields are required — please fill in grind, temp, ratio, time, and rating.');
+            return;
+          }
 
-      const btn = document.getElementById('submitBrewBtn');
-      btn.disabled = true;
-      btn.textContent = 'Submitting…';
+          const btn = document.getElementById('submitBrewBtn');
+          btn.disabled = true;
+          btn.textContent = 'Submitting…';
 
-      hide('submitErrorState');
-      hide('submitSuccessState');
-      show('submitLoadingState');
-      updateSliderHeight();
+          hide('submitErrorState');
+          hide('submitSuccessState');
+          show('submitLoadingState');
+          updateSliderHeight();
 
-      const body = {
-        origin,
-        roast_level: roast,
-        brewing_method_id: parseInt(method),
-        source: 'user_submitted'
-      };
+          const body = {
+            origin,
+            roast_level: roast,
+            brewing_method_id: parseInt(method),
+            source: 'user_submitted'
+          };
 
-      if (grind)                 body.grind_size   = grind;
-      if (tempRaw)               body.water_temp_c = parseInt(tempRaw);
-      if (ratioRaw)              body.ratio        = 1 / parseFloat(ratioRaw);
-      if (timeRaw)               body.brew_time_s  = parseInt(timeRaw);
-      if (_selectedRating > 0)   body.rating       = _selectedRating;
-      if (notes)                 body.notes        = notes;
+          if (grind)                 body.grind_size   = grind;
+          if (tempRaw)               body.water_temp_c = parseInt(tempRaw);
+          if (ratioRaw)              body.ratio        = 1 / parseFloat(ratioRaw);
+          if (timeRaw)               body.brew_time_s  = parseInt(timeRaw);
+          if (_selectedRating > 0)   body.rating       = _selectedRating;
+          if (notes)                 body.notes        = notes;
 
-      try {
-        const res = await fetch(`${API}/brews`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
+          try {
+            const res = await fetch(`${API}/brews`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body)
+            });
 
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || err.message || `API error ${res.status}`);
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(err.error || err.message || `API error ${res.status}`);
+            }
+
+            hide('submitLoadingState');
+            show('submitSuccessState');
+
+            // Clear all form fields so user can submit another brew immediately
+            clearBrewForm();
+
+          } catch (err) {
+            hide('submitLoadingState');
+            showSubmitError(err.message || 'Something went wrong. Please try again.');
+          } finally {
+            btn.disabled = false;
+            btn.textContent = 'Submit brew';
+            updateSliderHeight();
+          }
         }
 
-        hide('submitLoadingState');
-        show('submitSuccessState');
-
-      } catch (err) {
-        hide('submitLoadingState');
-        showSubmitError(err.message || 'Something went wrong. Please try again.');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Submit brew';
-        updateSliderHeight();
-      }
-    }
+        function clearBrewForm() {
+          document.getElementById('originInputB').value = '';
+          document.getElementById('roastB').value = '';
+          document.getElementById('methodB').value = '';
+          document.getElementById('grindB').value = '';
+          document.getElementById('tempB').value = '';
+          document.getElementById('ratioB').value = '';
+          document.getElementById('timeB').value = '';
+          document.getElementById('notesB').value = '';
+          _selectedRating = 0;
+          paintStars(0);
+        }
 
     // ── Helpers ─────────────────────────────────────────────────
     function show(id) { document.getElementById(id).classList.remove('hidden'); }
